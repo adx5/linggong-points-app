@@ -1,110 +1,639 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>零工获取积分App - 功能测试版</title>
+  <!-- 使用阿里云镜像，确保国内加载稳定 -->
+  <link rel="stylesheet" href="https://registry.npmmirror.com/element-plus/2.6.1/files/dist/index.css" />
   <style>
-    body { font-family: sans-serif; padding: 20px; background: #f0f2f5; }
-    .card { background: #fff; padding: 20px; margin-bottom: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-    input, button { padding: 8px; margin: 5px 0; }
-    pre { background: #333; color: #0f0; padding: 10px; border-radius: 4px; overflow-x: auto; }
+    body { font-family: -apple-system, "PingFang SC", "Helvetica Neue", sans-serif; margin: 0; padding: 0; background: #f5f7fa; }
+    .app-header { background: linear-gradient(135deg, #409eff 0%, #36d1dc 100%); color: #fff; padding: 14px 20px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+    .app-title { font-size: 18px; font-weight: 600; }
+    .container { max-width: 1100px; margin: 0 auto; padding: 20px; }
+    .section { background: #fff; border-radius: 10px; padding: 20px; margin-bottom: 16px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+    .section h3 { margin: 0 0 14px; color: #303133; font-size: 16px; border-left: 3px solid #409eff; padding-left: 10px; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; }
+    .task-card { border: 1px solid #ebeef5; border-radius: 8px; padding: 14px; cursor: pointer; transition: all 0.2s; background: #fafbfc; }
+    .task-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(64,158,255,0.15); border-color: #409eff; }
+    .task-card.disabled { opacity: 0.5; cursor: not-allowed; }
+    .task-name { font-weight: 600; color: #303133; font-size: 14px; margin-bottom: 4px; }
+    .task-points { color: #f56c6c; font-size: 18px; font-weight: 700; }
+    .task-desc { color: #909399; font-size: 12px; margin-top: 4px; }
+    .big-stat { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 20px; }
+    .stat-card { flex: 1; min-width: 140px; background: #fff; padding: 16px; border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+    .stat-label { color: #909399; font-size: 12px; }
+    .stat-value { color: #303133; font-size: 24px; font-weight: 700; margin-top: 4px; }
+    .stat-value.green { color: #67c23a; }
+    .stat-value.red { color: #f56c6c; }
+    .stat-value.blue { color: #409eff; }
+    .product-card { display: flex; justify-content: space-between; align-items: center; padding: 12px; border: 1px solid #ebeef5; border-radius: 8px; margin-bottom: 8px; }
+    .verify-card { max-width: 500px; margin: 0 auto; }
+    .login-card { max-width: 380px; margin: 60px auto; }
+    .nav-tabs { display: flex; gap: 4px; margin-bottom: 16px; border-bottom: 2px solid #e4e7ed; }
+    .nav-tab { padding: 10px 16px; cursor: pointer; color: #606266; border-bottom: 2px solid transparent; margin-bottom: -2px; transition: all 0.2s; font-size: 14px; }
+    .nav-tab.active { color: #409eff; border-bottom-color: #409eff; font-weight: 600; }
+    .api-log { font-family: monospace; font-size: 11px; max-height: 200px; overflow-y: auto; background: #fafafa; padding: 8px; border-radius: 4px; border: 1px solid #ebeef5; }
+    .api-log .row { padding: 2px 0; }
+    .api-log .ok { color: #67c23a; }
+    .api-log .err { color: #f56c6c; }
+    pre.code { background: #fafafa; padding: 8px; border-radius: 4px; font-size: 11px; overflow-x: auto; }
   </style>
 </head>
 <body>
-  <h2>零工获取积分App - 功能测试版</h2>
+  <div id="app">
+    <!-- 登录页 -->
+    <div v-if="!isLogin">
+      <div class="login-card">
+        <div class="section">
+          <h3>🔐 登录 / 注册</h3>
+          <p style="color:#909399;font-size:12px;">测试模式 - 验证码固定 <b>123456</b></p>
+          <el-select v-model="loginForm.role" placeholder="选择身份" style="width:100%;margin-bottom:12px;">
+            <el-option label="C端用户" value="user"></el-option>
+            <el-option label="B端门店" value="store"></el-option>
+            <el-option label="A端总部" value="admin"></el-option>
+          </el-select>
+          <el-input v-if="loginForm.role==='store'" v-model="loginForm.storeCode" placeholder="门店码 (store001)" style="margin-bottom:12px;" />
+          <el-input v-else v-model="loginForm.phone" :placeholder="loginForm.role==='admin' ? '账号 (admin)' : '手机号'" style="margin-bottom:12px;" />
+          <el-input v-if="loginForm.role!=='admin'" v-model="loginForm.code" placeholder="验证码 (123456)" style="margin-bottom:12px;" />
+          <el-button type="primary" @click="doLogin" :loading="loading" style="width:100%;">登录</el-button>
+          <div style="margin-top:16px;padding-top:12px;border-top:1px solid #ebeef5;">
+            <p style="color:#909399;font-size:12px;margin:0 0 6px;">测试账号：</p>
+            <p style="color:#606266;font-size:12px;margin:2px 0;">📱 C端: 13800000001 (用户A) / 002 (B) / 003 (C)</p>
+            <p style="color:#606266;font-size:12px;margin:2px 0;">🏪 B端: store001</p>
+            <p style="color:#606266;font-size:12px;margin:2px 0;">🏢 A端: admin / 123456</p>
+          </div>
+        </div>
+      </div>
+    </div>
 
-  <div class="card">
-    <h3>C端测试</h3>
-    <input id="userPhone" value="13800000001" placeholder="手机号">
-    <button onclick="loginUser()">登录 C端</button>
-    <br>
-    <button onclick="doTask('signin')">签到 (+1)</button>
-    <button onclick="doTask('moments')">发朋友圈 (+3)</button>
-    <button onclick="watchAd()">看视频 (+5)</button>
-    <button onclick="getUserInfo()">刷新个人信息</button>
+    <!-- 已登录 -->
+    <div v-else>
+      <div class="app-header">
+        <div class="app-title">📱 零工获取积分App <span style="font-size:11px;opacity:0.7;">功能测试版</span></div>
+        <div style="display:flex;align-items:center;gap:12px;">
+          <span style="font-size:12px;">{{ userInfo.nickname || userInfo.store_name || 'admin' }}</span>
+          <el-button size="small" @click="doLogout" type="warning" plain>切换</el-button>
+        </div>
+      </div>
+
+      <div class="container">
+        <!-- C端用户 -->
+        <div v-if="currentRole==='user'">
+          <div class="big-stat">
+            <div class="stat-card">
+              <div class="stat-label">💰 可用积分</div>
+              <div class="stat-value green">{{ stats.balance || 0 }}</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">🌱 成长值</div>
+              <div class="stat-value blue">{{ stats.growth || 0 }}</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">👑 等级</div>
+              <div class="stat-value">{{ stats.levelName || '青铜' }}</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">📊 今日任务</div>
+              <div class="stat-value">{{ stats.taskToday || 0 }}</div>
+            </div>
+          </div>
+
+          <div class="nav-tabs">
+            <div :class="['nav-tab', cTab==='home' && 'active']" @click="cTab='home'">🏠 首页</div>
+            <div :class="['nav-tab', cTab==='ads' && 'active']" @click="cTab='ads'">📺 看视频</div>
+            <div :class="['nav-tab', cTab==='tasks' && 'active']" @click="cTab='tasks'">✅ 任务</div>
+            <div :class="['nav-tab', cTab==='exchange' && 'active']" @click="cTab='exchange'">🎁 兑换</div>
+            <div :class="['nav-tab', cTab==='profile' && 'active']" @click="cTab='profile'">👤 我的</div>
+          </div>
+
+          <!-- 首页 -->
+          <div v-if="cTab==='home'">
+            <div class="section">
+              <h3>👋 欢迎，{{ userInfo.nickname || '用户' }}</h3>
+              <p>这是零工获取积分App的功能测试版。请通过顶部Tab切换不同功能模块。</p>
+              <el-alert title="核心流程" type="info" :closable="false" style="margin-top:12px;">
+                看视频(每天3组,每组10个=+5分) → 获取积分 → 到店核销兑换实物
+              </el-alert>
+            </div>
+            <div class="section">
+              <h3>🎯 今日任务进度</h3>
+              <div class="grid">
+                <div v-for="t in todayTasks" :key="t.key" :class="['task-card', t.completed && 'disabled']" @click="doTask(t)">
+                  <div class="task-name">{{ t.name }}</div>
+                  <div class="task-points">+{{ t.points }}分</div>
+                  <div class="task-desc">{{ t.completed ? '✓ 已完成' : '点击完成' }}</div>
+                </div>
+              </div>
+            </div>
+            <div class="section">
+              <h3>📜 最近积分流水</h3>
+              <el-table :data="flowList" stripe size="small" empty-text="暂无流水">
+                <el-table-column prop="flow_type_name" label="类型" width="100" />
+                <el-table-column prop="points" label="积分" width="80" />
+                <el-table-column prop="balance_after" label="余额" width="80" />
+                <el-table-column prop="remark" label="说明" />
+                <el-table-column prop="created_at" label="时间" width="140" />
+              </el-table>
+            </div>
+          </div>
+
+          <!-- 看视频 -->
+          <div v-if="cTab==='ads'">
+            <div class="section">
+              <h3>📺 看视频获取积分 (按组结算)</h3>
+              <p style="color:#909399;font-size:13px;">每组10个视频全部看完获得5分，每天3组共15分</p>
+              <div v-for="g in adGroups" :key="g.id" class="section" style="margin-top:12px;">
+                <div style="display:flex;justify-content:space-between;align-items:center;">
+                  <div>
+                    <b>第{{ g.id }}组</b>
+                    <span style="margin-left:12px;color:#909399;font-size:12px;">{{ g.current }}/10 {{ g.settled ? '✓ 已结算 +5分' : '' }}</span>
+                  </div>
+                  <el-button type="primary" size="small" :disabled="g.settled" @click="watchAd(g.id)">模拟看完1个</el-button>
+                </div>
+                <el-progress :percentage="(g.current/10)*100" :status="g.settled ? 'success' : ''" :stroke-width="8" style="margin-top:8px;" />
+              </div>
+            </div>
+          </div>
+
+          <!-- 任务中心 -->
+          <div v-if="cTab==='tasks'">
+            <div class="section">
+              <h3>✅ 每日任务</h3>
+              <div class="grid">
+                <div v-for="t in taskList" :key="t.key" :class="['task-card', t.completed && 'disabled']" @click="doTask(t)">
+                  <div class="task-name">{{ t.name }}</div>
+                  <div class="task-points">+{{ t.points }}分</div>
+                  <div class="task-desc">{{ t.completed ? '✓ 今日已完成' : t.desc }}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 兑换中心 -->
+          <div v-if="cTab==='exchange'">
+            <div class="section">
+              <h3>🎁 兑换中心 (每月两次提货日)</h3>
+              <p style="color:#909399;font-size:13px;">你的可用积分: <b style="color:#f56c6c;">{{ stats.balance || 0 }}</b></p>
+              <div v-for="p in products" :key="p.id" class="product-card">
+                <div>
+                  <div style="font-weight:600;">{{ p.name }}</div>
+                  <div style="color:#909399;font-size:12px;">{{ p.type===1?'实物·门店提货':p.type===2?'团购券':'VIP卡密' }}</div>
+                </div>
+                <div style="display:flex;align-items:center;gap:8px;">
+                  <span style="color:#f56c6c;font-weight:700;">{{ p.points }}分</span>
+                  <el-button type="primary" size="small" :disabled="stats.balance < p.points" @click="doExchange(p)">兑换</el-button>
+                </div>
+              </div>
+            </div>
+            <div class="section">
+              <h3>📦 我的兑换记录</h3>
+              <el-table :data="myOrders" stripe size="small" empty-text="暂无订单">
+                <el-table-column prop="product_name" label="商品" />
+                <el-table-column prop="points_cost" label="积分" width="80" />
+                <el-table-column prop="verify_code" label="核销码" width="140" />
+                <el-table-column prop="status_name" label="状态" width="100" />
+                <el-table-column prop="created_at" label="时间" width="140" />
+              </el-table>
+            </div>
+          </div>
+
+          <!-- 我的 -->
+          <div v-if="cTab==='profile'">
+            <div class="section">
+              <h3>👤 个人信息</h3>
+              <pre class="code">{{ JSON.stringify(userInfo, null, 2) }}</pre>
+            </div>
+            <div class="section">
+              <h3>📊 等级说明</h3>
+              <el-table :data="levels" stripe size="small">
+                <el-table-column prop="level" label="等级" width="80" />
+                <el-table-column prop="name" label="名称" width="100" />
+                <el-table-column prop="min" label="成长值要求" />
+              </el-table>
+            </div>
+            <div class="section">
+              <h3>👥 我的下线 (拉新)</h3>
+              <el-table :data="downlines" stripe size="small" empty-text="暂无下线">
+                <el-table-column prop="user_phone" label="下线手机号" width="140" />
+                <el-table-column prop="level" label="关系" width="100">
+                  <template #default="{row}">
+                    <el-tag :type="row.level===1?'success':'info'" size="small">{{ row.level===1?'一级':'二级' }}</el-tag>
+                  </template>
+                </el-table-column>
+                <el-table-column prop="pending_points" label="待生效" width="100" />
+                <el-table-column prop="settled_name" label="状态" />
+              </el-table>
+              <p style="color:#909399;font-size:12px;margin-top:8px;">下线首次实物核销时，一级+100积分，二级+50积分</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- B端门店 -->
+        <div v-else-if="currentRole==='store'">
+          <h2 style="text-align:center;margin-bottom:20px;">🏪 门店核销台</h2>
+          <div class="verify-card">
+            <div class="section">
+              <h3>📱 用户核销</h3>
+              <el-input v-model="verifyForm.phone" placeholder="会员手机号" style="margin-bottom:12px;" clearable />
+              <el-button type="primary" @click="queryUser" :loading="loading" style="width:100%;margin-bottom:12px;">查询用户</el-button>
+              <div v-if="queriedUser">
+                <el-descriptions :column="2" border size="small" style="margin-bottom:12px;">
+                  <el-descriptions-item label="手机号">{{ queriedUser.phone }}</el-descriptions-item>
+                  <el-descriptions-item label="昵称">{{ queriedUser.nickname }}</el-descriptions-item>
+                  <el-descriptions-item label="等级">{{ queriedUser.level_name }}</el-descriptions-item>
+                  <el-descriptions-item label="成长值">{{ queriedUser.growth_value }}</el-descriptions-item>
+                  <el-descriptions-item label="可用积分" :span="2">
+                    <span style="color:#f56c6c;font-size:20px;font-weight:700;">{{ queriedUser.available_points }}</span>
+                  </el-descriptions-item>
+                </el-descriptions>
+                <el-input v-model="verifyForm.totalPoints" placeholder="本次核销积分" type="number" style="margin-bottom:12px;" />
+                <el-input v-model="verifyForm.verifyCode" placeholder="核销码(库存系统传入)" style="margin-bottom:12px;" />
+                <el-input v-model="verifyForm.batchNo" placeholder="批次号(选填,如 202610-1)" style="margin-bottom:12px;" />
+                <el-button type="danger" @click="doVerify" :loading="loading" :disabled="!queriedUser" style="width:100%;">⚡ 确认扣减</el-button>
+              </div>
+            </div>
+            <div class="section">
+              <h3>📜 今日核销流水</h3>
+              <el-button @click="loadVerifyHistory" size="small" style="margin-bottom:8px;">刷新</el-button>
+              <el-table :data="verifyHistory" stripe size="small" empty-text="暂无记录">
+                <el-table-column prop="user_phone" label="手机号" width="120" />
+                <el-table-column prop="total_points" label="积分" width="80" />
+                <el-table-column prop="verify_code" label="核销码" width="160" />
+                <el-table-column prop="operator_name" label="操作人" width="100" />
+                <el-table-column prop="verify_time" label="时间" />
+              </el-table>
+            </div>
+          </div>
+        </div>
+
+        <!-- A端总部 -->
+        <div v-else-if="currentRole==='admin'">
+          <h2 style="text-align:center;margin-bottom:20px;">🏢 总部测试后台</h2>
+          <div class="nav-tabs">
+            <div :class="['nav-tab', aTab==='dashboard' && 'active']" @click="aTab='dashboard'">📊 看板</div>
+            <div :class="['nav-tab', aTab==='users' && 'active']" @click="aTab='users'">👥 用户</div>
+            <div :class="['nav-tab', aTab==='verify' && 'active']" @click="aTab='verify'">📋 核销</div>
+            <div :class="['nav-tab', aTab==='reset' && 'active']" @click="aTab='reset'">🔧 重置</div>
+          </div>
+
+          <div v-if="aTab==='dashboard'">
+            <div class="big-stat">
+              <div class="stat-card"><div class="stat-label">用户总数</div><div class="stat-value blue">{{ dash.total_users || 0 }}</div></div>
+              <div class="stat-card"><div class="stat-label">总积分(冗余)</div><div class="stat-value green">{{ dash.total_points || 0 }}</div></div>
+              <div class="stat-card"><div class="stat-label">活跃分桶</div><div class="stat-value">{{ dash.total_active_buckets || 0 }}</div></div>
+              <div class="stat-card"><div class="stat-label">今日任务</div><div class="stat-value">{{ dash.total_task_today || 0 }}</div></div>
+              <div class="stat-card"><div class="stat-label">今日视频</div><div class="stat-value">{{ dash.total_ad_today || 0 }}</div></div>
+              <div class="stat-card"><div class="stat-label">今日核销次数</div><div class="stat-value red">{{ dash.total_verify_today_count || 0 }}</div></div>
+              <div class="stat-card"><div class="stat-label">今日核销积分</div><div class="stat-value red">{{ dash.total_verify_today_points || 0 }}</div></div>
+            </div>
+            <div class="section">
+              <h3>🔌 API调用日志</h3>
+              <div class="api-log">
+                <div v-for="(l,i) in apiLog.slice(-30).reverse()" :key="i" :class="['row', l.ok?'ok':'err']">
+                  [{{ l.time }}] {{ l.method }} {{ l.url }} → {{ l.status }} {{ l.ms }}ms
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div v-if="aTab==='users'">
+            <div class="section">
+              <h3>👥 用户列表</h3>
+              <el-button @click="loadAdminUsers" size="small" style="margin-bottom:8px;">刷新</el-button>
+              <el-table :data="adminUsers" stripe size="small">
+                <el-table-column prop="id" label="ID" width="50" />
+                <el-table-column prop="phone" label="手机号" width="120" />
+                <el-table-column prop="nickname" label="昵称" width="120" />
+                <el-table-column prop="available_points" label="积分" width="80" />
+                <el-table-column prop="growth_value" label="成长值" width="80" />
+                <el-table-column prop="member_level" label="等级" width="60" />
+                <el-table-column label="操作" width="160">
+                  <template #default="{row}">
+                    <el-button size="small" type="success" @click="addPoints(row.id)">+100分</el-button>
+                    <el-button size="small" type="warning" @click="triggerSettle(row.id)">触发结算</el-button>
+                  </template>
+                </el-table-column>
+              </el-table>
+            </div>
+          </div>
+
+          <div v-if="aTab==='verify'">
+            <div class="section">
+              <h3>📋 全部核销记录</h3>
+              <el-button @click="loadAdminVerify" size="small" style="margin-bottom:8px;">刷新</el-button>
+              <el-table :data="adminVerify" stripe size="small">
+                <el-table-column prop="id" label="ID" width="50" />
+                <el-table-column prop="user_phone" label="手机号" width="120" />
+                <el-table-column prop="store_name" label="门店" width="140" />
+                <el-table-column prop="total_points" label="积分" width="80" />
+                <el-table-column prop="verify_code" label="核销码" width="160" />
+                <el-table-column prop="operator_name" label="操作人" width="100" />
+                <el-table-column prop="verify_time" label="时间" />
+              </el-table>
+            </div>
+          </div>
+
+          <div v-if="aTab==='reset'">
+            <div class="section">
+              <h3>🔧 测试管理</h3>
+              <el-alert title="一键重置" type="warning" :closable="false" style="margin-bottom:12px;">
+                清空所有流水/分桶/核销/广告/任务/兑换记录。<br>
+                保留3个测试用户：A=100分/白银 / B=0分 / C=200分
+              </el-alert>
+              <el-button type="danger" @click="doReset" :loading="loading">⚠️ 一键重置所有数据</el-button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 
-  <div class="card">
-    <h3>B端门店测试</h3>
-    <button onclick="loginStore()">登录门店 (store001)</button>
-    <br>
-    <input id="verifyPhone" value="13800000001" placeholder="用户手机号">
-    <input id="verifyPoints" value="10" type="number" placeholder="核销积分">
-    <button onclick="doVerify()">确认核销</button>
-  </div>
-
-  <div class="card">
-    <h3>运行日志</h3>
-    <pre id="log">等待操作...</pre>
-  </div>
+  <!-- 引入 Vue 3 和 Element Plus（阿里云镜像） -->
+  <script src="https://registry.npmmirror.com/vue/3.4.21/files/dist/vue.global.prod.js"></script>
+  <script src="https://registry.npmmirror.com/element-plus/2.6.1/files/dist/index.full.min.js"></script>
+  <script src="https://registry.npmmirror.com/@element-plus/icons-vue/2.3.1/files/dist/index.iife.min.js"></script>
 
   <script>
-    let userToken = '';
-    let storeToken = '';
+    const { createApp, ref, reactive, onMounted } = Vue;
+    const { ElMessage, ElMessageBox } = ElementPlus;
 
-    function log(msg, data) {
-      const text = data ? JSON.stringify(data, null, 2) : '';
-      document.getElementById('log').innerText = `[${new Date().toLocaleTimeString()}] ${msg}\n${text}\n\n` + document.getElementById('log').innerText;
-    }
+    const app = createApp({
+      setup() {
+        const isLogin = ref(false);
+        const currentRole = ref('');
+        const userInfo = ref({});
+        const token = ref(localStorage.getItem('ad-token') || '');
+        const loading = ref(false);
+        const apiLog = ref([]);
+        const cTab = ref('home');
+        const aTab = ref('dashboard');
 
-    async function api(path, method='GET', body=null, role='user') {
-      const headers = { 'Content-Type': 'application/json' };
-      const token = role === 'user' ? userToken : storeToken;
-      if (token) headers['Authorization'] = 'Bearer ' + token;
-      const res = await fetch(path, { method, headers, body: body ? JSON.stringify(body) : null });
-      const data = await res.json();
-      if (data.code !== 0) throw new Error(data.message || '请求失败');
-      return data.data;
-    }
+        const loginForm = reactive({ role: 'user', phone: '13800000001', code: '123456', storeCode: 'store001' });
+        const stats = reactive({ balance: 0, growth: 0, level: 1, levelName: '青铜', taskToday: 0 });
+        const todayTasks = ref([]);
+        const taskList = ref([]);
+        const flowList = ref([]);
+        const adGroups = ref([]);
+        const products = ref([]);
+        const myOrders = ref([]);
+        const downlines = ref([]);
+        const levels = ref([{level:1,name:'青铜',min:0},{level:2,name:'白银',min:100},{level:3,name:'黄金',min:500},{level:4,name:'铂金',min:2000},{level:5,name:'钻石',min:5000}]);
+        const dash = ref({});
+        const adminUsers = ref([]);
+        const adminVerify = ref([]);
 
-    async function loginUser() {
-      try {
-        const phone = document.getElementById('userPhone').value;
-        const res = await api('/api/auth/login', 'POST', { role: 'user', phone, code: '123456' });
-        userToken = res.token;
-        log('C端登录成功', res.user);
-      } catch (e) { log('C端登录失败', e.message); }
-    }
+        const verifyForm = reactive({ phone: '', totalPoints: '', verifyCode: '', batchNo: '202610-1' });
+        const queriedUser = ref(null);
+        const verifyHistory = ref([]);
 
-    async function loginStore() {
-      try {
-        const res = await api('/api/auth/login', 'POST', { role: 'store', storeCode: 'store001' });
-        storeToken = res.token;
-        log('B端登录成功', res.store);
-      } catch (e) { log('B端登录失败', e.message); }
-    }
+        function logApi(method, url, status, ms, ok) {
+          apiLog.value.push({ time: new Date().toLocaleTimeString(), method, url, status, ms, ok });
+          if (apiLog.value.length > 200) apiLog.value = apiLog.value.slice(-200);
+        }
 
-    async function getUserInfo() {
-      try {
-        const res = await api('/api/user/me');
-        log('用户信息', res);
-      } catch (e) { log('获取失败', e.message); }
-    }
+        async function api(method, path, body) {
+          const start = Date.now();
+          const headers = { 'Content-Type': 'application/json' };
+          if (token.value) headers['Authorization'] = 'Bearer ' + token.value;
+          try {
+            const r = await fetch(path, { method, headers, body: body ? JSON.stringify(body) : undefined });
+            const ms = Date.now() - start;
+            const data = await r.json();
+            logApi(method, path, r.status, ms, data.code === 0);
+            if (data.code !== 0) {
+              if (data.code === 401) { doLogout(); }
+              ElMessage.error(data.message || '请求失败');
+              return null;
+            }
+            return data;
+          } catch (e) {
+            logApi(method, path, 0, Date.now()-start, false);
+            ElMessage.error('网络错误: ' + e.message);
+            return null;
+          }
+        }
 
-    async function doTask(code) {
-      try {
-        const res = await api('/api/tasks/' + code, 'POST');
-        log('任务完成', res);
-        getUserInfo();
-      } catch (e) { log('任务失败', e.message); }
-    }
+        async function doLogin() {
+          loading.value = true;
+          try {
+            const body = { role: loginForm.role, code: loginForm.code };
+            if (loginForm.role === 'user') body.phone = loginForm.phone;
+            else if (loginForm.role === 'store') body.storeCode = loginForm.storeCode;
+            else if (loginForm.role === 'admin') { body.phone = 'admin'; }
+            const r = await api('POST', '/api/auth/login', body);
+            if (!r) return;
+            token.value = r.data.token;
+            localStorage.setItem('ad-token', token.value);
+            isLogin.value = true;
+            currentRole.value = r.data.role;
+            if (r.data.role === 'user') userInfo.value = r.data.user;
+            else if (r.data.role === 'store') userInfo.value = r.data.store;
+            else userInfo.value = { nickname: '总部测试' };
+            ElMessage.success('登录成功');
+            await loadInitial();
+          } finally { loading.value = false; }
+        }
 
-    async function watchAd() {
-      try {
-        const res = await api('/api/ads/pre-reward', 'POST', { adGroupId: 1, transId: 'test_' + Date.now() });
-        log('视频观看记录', res);
-        getUserInfo();
-      } catch (e) { log('视频获取失败', e.message); }
-    }
+        function doLogout() {
+          token.value = '';
+          localStorage.removeItem('ad-token');
+          isLogin.value = false;
+          currentRole.value = '';
+          userInfo.value = {};
+        }
 
-    async function doVerify() {
-      try {
-        const phone = document.getElementById('verifyPhone').value;
-        const points = parseInt(document.getElementById('verifyPoints').value);
-        const res = await api('/api/verify/confirm', 'POST', { phone, totalPoints: points, verifyCode: '123' }, 'store');
-        log('核销成功', res);
-      } catch (e) { log('核销失败', e.message); }
+        async function loadInitial() {
+          if (currentRole.value === 'user') {
+            await Promise.all([loadUserStats(), loadTodayTasks(), loadFlow(), loadAdStatus(), loadProducts(), loadMyOrders(), loadDownlines()]);
+          } else if (currentRole.value === 'store') {
+            await loadVerifyHistory();
+          } else if (currentRole.value === 'admin') {
+            await loadDashboard();
+          }
+        }
+
+        async function loadUserStats() {
+          const r = await api('GET', '/api/user/points');
+          if (!r) return;
+          stats.balance = r.data.available_points;
+          stats.growth = r.data.growth_value;
+          stats.member_level = r.data.member_level;
+          const lv = levels.value.find(l => l.level === r.data.member_level);
+          if (lv) stats.levelName = lv.name;
+        }
+        async function loadTodayTasks() {
+          const r = await api('GET', '/api/tasks/today');
+          if (!r) return;
+          const map = { signin:'签到', moments:'朋友圈', appDownload:'App下载', yifenGou:'1分购', study:'线上学习', studyOffline:'线下学习', parttime:'兼职' };
+          const pts = { signin:1, moments:3, appDownload:25, yifenGou:3, study:5, studyOffline:20, parttime:3 };
+          const list = Object.keys(r.data).filter(k => k !== '_raw').map(k => ({
+            key: k, name: map[k] || k, points: pts[k] || 0, completed: r.data[k] > 0, desc: '点击完成'
+          }));
+          todayTasks.value = list;
+          taskList.value = list;
+        }
+        async function loadFlow() {
+          const r = await api('GET', '/api/user/flow?limit=20');
+          if (!r) return;
+          const map = { 1:'获得', 2:'消耗', 3:'过期' };
+          flowList.value = (r.data || []).map(x => ({ ...x, flow_type_name: map[x.flow_type] || ('T'+x.flow_type) }));
+        }
+        async function loadAdStatus() {
+          const r = await api('GET', '/api/ads/status');
+          if (!r) return;
+          adGroups.value = r.data.groups;
+        }
+        async function loadProducts() {
+          const r = await api('GET', '/api/exchange/list');
+          if (r) products.value = r.data;
+        }
+        async function loadMyOrders() {
+          const r = await api('GET', '/api/exchange/my-orders');
+          if (!r) return;
+          const map = { 1:'待核销', 2:'已完成' };
+          myOrders.value = (r.data || []).map(x => ({ ...x, status_name: map[x.status] || ('S'+x.status) }));
+        }
+        async function loadDownlines() {
+          const r = await api('GET', '/api/referral/my-downlines');
+          if (!r) return;
+          const map = { 0:'待生效', 1:'已发放' };
+          downlines.value = (r.data || []).map(x => ({ ...x, settled_name: map[x.settled] || '-' }));
+        }
+
+        async function doTask(t) {
+          if (t.completed) { ElMessage.warning('今日已完成'); return; }
+          loading.value = true;
+          try {
+            const r = await api('POST', '/api/tasks/' + t.key);
+            if (r) { ElMessage.success(r.message); await loadUserStats(); await loadTodayTasks(); await loadFlow(); }
+          } finally { loading.value = false; }
+        }
+
+        async function watchAd(groupId) {
+          loading.value = true;
+          try {
+            const transId = 'WEB-' + Date.now() + '-' + Math.random().toString(36).slice(2,8);
+            const r = await api('POST', '/api/ads/pre-reward', { adGroupId: groupId, transId });
+            if (r) {
+              ElMessage.success('已记录(等3秒模拟回调)');
+              setTimeout(async () => {
+                await loadAdStatus();
+                await loadUserStats();
+                const g = adGroups.value.find(x => x.id === groupId);
+                if (g && g.settled) {
+                  ElMessage.success('🎉 第' + groupId + '组结算 +5分!');
+                  await loadFlow();
+                }
+              }, 5000);
+            }
+          } finally { loading.value = false; }
+        }
+
+        async function doExchange(p) {
+          if (stats.balance < p.points) { ElMessage.warning('积分不足'); return; }
+          try {
+            await ElMessageBox.confirm(`确认用 ${p.points} 积分兑换 ${p.name}?`, '提示', { type: 'warning' });
+            const r = await api('POST', '/api/exchange/order', { productId: p.id });
+            if (r) {
+              ElMessage.success(r.message + (r.data.verify_code ? ' 核销码: ' + r.data.verify_code : ''));
+              await loadUserStats();
+              await loadMyOrders();
+            }
+          } catch (e) { /* cancelled */ }
+        }
+
+        async function queryUser() {
+          if (!/^1\d{10}$/.test(verifyForm.phone)) { ElMessage.warning('手机号格式错误'); return; }
+          loading.value = true;
+          try {
+            const r = await api('POST', '/api/verify/query', { phone: verifyForm.phone });
+            if (r) { queriedUser.value = r.data; }
+          } finally { loading.value = false; }
+        }
+
+        async function doVerify() {
+          if (!queriedUser.value) return;
+          if (!verifyForm.totalPoints || verifyForm.totalPoints <= 0) { ElMessage.warning('请输入核销积分'); return; }
+          if (queriedUser.value.available_points < verifyForm.totalPoints) { ElMessage.warning('用户积分不足'); return; }
+          if (!verifyForm.verifyCode) { ElMessage.warning('请输入核销码'); return; }
+          loading.value = true;
+          try {
+            const r = await api('POST', '/api/verify/confirm', {
+              phone: verifyForm.phone, totalPoints: parseInt(verifyForm.totalPoints), verifyCode: verifyForm.verifyCode, batchNo: verifyForm.batchNo
+            });
+            if (r) {
+              ElMessage.success('核销成功!');
+              queriedUser.value = null;
+              verifyForm.totalPoints = ''; verifyForm.verifyCode = '';
+              await loadVerifyHistory();
+            }
+          } finally { loading.value = false; }
+        }
+
+        async function loadVerifyHistory() {
+          const r = await api('GET', '/api/verify/history?limit=20');
+          if (r) verifyHistory.value = r.data;
+        }
+
+        async function loadDashboard() {
+          const r = await api('GET', '/api/admin/dashboard');
+          if (r) dash.value = r.data;
+        }
+        async function loadAdminUsers() {
+          const r = await api('GET', '/api/admin/users');
+          if (r) adminUsers.value = r.data;
+        }
+        async function loadAdminVerify() {
+          const r = await api('GET', '/api/admin/all-verify');
+          if (r) adminVerify.value = r.data;
+        }
+        async function addPoints(uid) {
+          const r = await api('POST', '/api/admin/add-points', { userId: uid, points: 100, remark: '后台手动加100' });
+          if (r) { ElMessage.success('已加100分'); await loadAdminUsers(); await loadDashboard(); }
+        }
+        async function triggerSettle(uid) {
+          for (let g = 1; g <= 3; g++) {
+            const r = await api('POST', '/api/admin/trigger-settle', { userId: uid, adGroupId: g });
+            if (r && r.data && r.data.completed) ElMessage.success(`第${g}组已结算 +5`);
+          }
+          await loadAdminUsers();
+        }
+        async function doReset() {
+          try {
+            await ElMessageBox.confirm('确定要清空所有测试数据吗？此操作不可恢复！', '⚠️ 危险操作', { type: 'error', confirmButtonText: '确认重置' });
+            const r = await api('POST', '/api/admin/reset');
+            if (r) { ElMessage.success(r.message); await loadDashboard(); }
+          } catch (e) {}
+        }
+
+        onMounted(async () => {
+          if (token.value) {
+            const r = await api('GET', '/api/auth/verify-token');
+            if (r) {
+              isLogin.value = true;
+              currentRole.value = r.data.role;
+              userInfo.value = r.data.user || r.data.store || { nickname: 'admin' };
+              await loadInitial();
+            } else { doLogout(); }
+          }
+        });
+
+        return {
+          isLogin, currentRole, userInfo, loginForm, loading, doLogin, doLogout,
+          cTab, aTab, stats, todayTasks, taskList, flowList, adGroups, products, myOrders, downlines, levels,
+          doTask, watchAd, doExchange,
+          verifyForm, queriedUser, verifyHistory, queryUser, doVerify, loadVerifyHistory,
+          dash, adminUsers, adminVerify, apiLog, loadAdminUsers, loadAdminVerify, addPoints, triggerSettle, doReset
+        };
+      }
+    });
+
+    app.use(ElementPlus);
+    if (window.ElementPlusIconsVue) {
+        for (const [k, v] of Object.entries(ElementPlusIconsVue)) app.component(k, v);
     }
+    app.mount('#app');
   </script>
 </body>
 </html>
