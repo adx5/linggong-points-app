@@ -1,11 +1,9 @@
-"""
-database.py - PostgreSQL (Neon) 异步连接
-- 从环境变量 DATABASE_URL 读取连接串
-- 自动把 postgresql:// 转换为 postgresql+asyncpg://
-- AsyncSession 工厂 + get_db FastAPI 依赖
-"""
 import os
 from typing import AsyncGenerator
+
+# 新增这两行，自动加载 .env 文件
+from dotenv import load_dotenv
+load_dotenv()
 
 from sqlalchemy.ext.asyncio import (
     AsyncSession,
@@ -17,8 +15,10 @@ from sqlalchemy.orm import declarative_base
 DATABASE_URL = os.environ.get("DATABASE_URL")
 if not DATABASE_URL:
     raise RuntimeError(
-        "DATABASE_URL 环境变量未设置。请在 Neon 控制台获取连接串后设置。"
+        "DATABASE_URL 环境变量未设置。请在根目录创建 .env 文件，或检查环境变量配置。"
     )
+
+# ... 下面的代码保持不变 ...
 
 # 兼容 Neon 给的 postgresql:// 形式
 if DATABASE_URL.startswith("postgresql://"):
@@ -35,7 +35,8 @@ else:
 engine = create_async_engine(
     ASYNC_DATABASE_URL,
     echo=False,
-    pool_pre_ping=True,
+    pool_pre_ping=True,   # 每次取连接前先 ping 一下，防死连接
+    pool_recycle=300,     # 核心：连接存活 300 秒后自动回收，防止被数据库端强制杀掉
     pool_size=5,
     max_overflow=10,
 )

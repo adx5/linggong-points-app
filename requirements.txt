@@ -6,3 +6,4 @@ asyncpg==0.31.0
 psycopg[binary]==3.3.6
 pydantic==2.13.4
 python-multipart==0.0.12
+python-dotenv==1.0.1
