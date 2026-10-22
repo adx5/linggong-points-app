@@ -5,141 +5,167 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>XX零工市场</title>
   <style>
-    /* ================= 全局重置 ================= */
+    /* ================= 全局变量与扁平化重置 ================= */
     :root {
-      --brand-color: #2b65f7;
-      --text-1: #333333; --text-2: #666666; --text-3: #999999;
-      --bg-base: #f5f6f8; --bg-card: #ffffff; --danger: #f56c6c; --success: #52c41a; --border-color: #f0f0f0;
+      --brand-color: #2563eb; /* 扁平主色 */
+      --brand-light: #eff6ff;
+      --text-1: #111827;
+      --text-2: #4b5563;
+      --text-3: #9ca3af;
+      --bg-base: #f9fafb; /* 极浅灰背景 */
+      --bg-card: #ffffff;
+      --danger: #ef4444;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --border-color: #e5e7eb; /* 边框替代阴影 */
     }
+
     * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
-    body { background-color: var(--bg-base); color: var(--text-1); font-size: 14px; padding-bottom: 60px; }
+    body { background-color: var(--bg-base); color: var(--text-1); font-size: 14px; padding-bottom: 60px; overflow-x: hidden; }
     .hidden { display: none !important; }
     input, select, textarea { outline: none; border: none; background: transparent; font-family: inherit; }
 
+    /* 扁平化 SVG 图标通用样式 */
+    .svg-icon { width: 24px; height: 24px; stroke: currentColor; stroke-width: 1.5; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+
+    /* ================= 动效 ================= */
+    button, .nav-item, .grid-item, .apply-item, .job-card, .list-item-card {
+      transition: background-color 0.15s ease, opacity 0.15s ease;
+    }
+    button:active, .nav-item:active, .grid-item:active, .apply-item:active {
+      background-color: #f3f4f6 !important;
+      opacity: 0.8;
+    }
     .tab-page { display: none; }
-    .tab-page.active { display: block; animation: fadeIn 0.2s ease; }
+    .tab-page.active { display: block; animation: fadeIn 0.2s ease forwards; }
     @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
     /* ================= 底部导航栏 ================= */
-    .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; height: 60px; background: #fff; display: flex; justify-content: space-around; align-items: center; box-shadow: 0 -1px 5px rgba(0,0,0,0.05); z-index: 100; padding-bottom: env(safe-area-inset-bottom); }
-    .nav-item { display: flex; flex-direction: column; align-items: center; font-size: 10px; color: var(--text-3); cursor: pointer; width: 20%; }
+    .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; height: 60px; background: #ffffff; display: flex; justify-content: space-around; align-items: center; border-top: 1px solid var(--border-color); z-index: 100; padding-bottom: env(safe-area-inset-bottom); }
+    .nav-item { display: flex; flex-direction: column; align-items: center; font-size: 11px; color: var(--text-3); cursor: pointer; width: 20%; }
     .nav-item.active { color: var(--brand-color); }
-    .nav-icon { font-size: 22px; margin-bottom: 2px; }
-    .nav-item-publish { position: relative; transform: translateY(-15px); width: 20%; display: flex; flex-direction: column; align-items: center; cursor: pointer; }
-    .publish-btn { width: 48px; height: 48px; background: #4b89ff; border-radius: 50%; display: flex; justify-content: center; align-items: center; color: #fff; font-size: 28px; box-shadow: 0 4px 10px rgba(43,101,247,0.3); border: 4px solid #fff; font-weight: 300; }
-    .publish-text { font-size: 10px; color: var(--text-3); margin-top: 2px; }
+    .nav-item.active .svg-icon { stroke: var(--brand-color); }
+    .nav-icon { margin-bottom: 4px; }
+
+    .nav-item-publish { position: relative; transform: translateY(-12px); width: 20%; display: flex; flex-direction: column; align-items: center; cursor: pointer; }
+    .publish-btn { width: 48px; height: 48px; background: var(--brand-color); border-radius: 50%; display: flex; justify-content: center; align-items: center; color: #fff; border: 4px solid var(--bg-base); }
+    .publish-btn .svg-icon { width: 24px; height: 24px; stroke-width: 2; }
+    .publish-text { font-size: 11px; color: var(--text-3); margin-top: 4px; }
 
     /* ================= 首页 ================= */
-    .home-header { background: var(--brand-color); padding: 12px 16px 60px 16px; border-radius: 0 0 20px 20px; color: #fff; position: relative; }
-    .home-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; font-size: 18px; font-weight: 500; }
-    .home-search { display: flex; gap: 10px; align-items: center; position: relative; z-index: 2; }
-    .city-select { background: #fff; color: var(--text-1); padding: 8px 10px; border-radius: 6px; font-size: 14px; display: flex; align-items: center; gap: 4px; font-weight: 500; }
-    .search-box { flex: 1; background: #fff; border-radius: 6px; display: flex; align-items: center; padding: 8px 12px; gap: 6px; }
-    .search-box input { flex: 1; font-size: 14px; color: var(--text-2); }
+    .home-header { background: var(--brand-color); padding: 16px 16px 60px 16px; border-radius: 0 0 16px 16px; color: #fff; }
+    .home-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; font-size: 18px; font-weight: 600; }
+    .home-search { display: flex; gap: 10px; align-items: center; }
+    .city-select { background: rgba(255,255,255,0.15); color: #fff; padding: 8px 12px; border-radius: 6px; font-size: 14px; display: flex; align-items: center; gap: 4px; font-weight: 500; }
+    .search-box { flex: 1; background: #fff; border-radius: 6px; display: flex; align-items: center; padding: 8px 12px; gap: 8px; }
+    .search-box input { flex: 1; font-size: 14px; color: var(--text-1); }
+    .search-box .svg-icon { color: var(--text-3); width: 20px; height: 20px; }
 
-    .category-card { background: #fff; margin: -40px 12px 12px 12px; border-radius: 12px; padding: 16px 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); position: relative; z-index: 10; display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px 8px; }
-    .cat-item { text-align: center; cursor: pointer; }
-    .cat-icon-wrap { width: 44px; height: 44px; border-radius: 50%; margin: 0 auto 6px auto; display: flex; justify-content: center; align-items: center; font-size: 22px; color: #fff; }
-    .cat-text { font-size: 13px; color: var(--text-1); }
+    .category-card { background: #fff; margin: -40px 12px 12px 12px; border-radius: 12px; padding: 20px 10px; border: 1px solid var(--border-color); position: relative; z-index: 10; display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px 8px; }
+    .cat-item { text-align: center; cursor: pointer; display: flex; flex-direction: column; align-items: center; }
+    /* 统一蓝色底色，白色图标 */
+    .cat-icon-wrap { width: 48px; height: 48px; border-radius: 12px; margin-bottom: 8px; display: flex; justify-content: center; align-items: center; background: var(--brand-color); color: #ffffff; }
+    .cat-text { font-size: 13px; color: var(--text-1); font-weight: 500; }
 
-    .list-tabs { display: flex; background: #fff; margin-bottom: 10px; border-bottom: 1px solid var(--border-color); }
-    .list-tab { flex: 1; text-align: center; padding: 12px 0; font-size: 15px; font-weight: 500; color: var(--text-2); cursor: pointer; position: relative; }
+    .list-tabs { display: flex; background: #fff; margin-bottom: 12px; border-bottom: 1px solid var(--border-color); }
+    .list-tab { flex: 1; text-align: center; padding: 14px 0; font-size: 15px; font-weight: 500; color: var(--text-2); cursor: pointer; position: relative; }
     .list-tab.active { color: var(--brand-color); }
-    .list-tab.active::after { content: ''; position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); width: 30px; height: 3px; background: var(--brand-color); border-radius: 2px; }
+    .list-tab.active::after { content: ''; position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); width: 32px; height: 3px; background: var(--brand-color); border-radius: 2px; }
 
     .list-section { padding: 0 12px; }
     .list-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding: 0 4px; }
     .list-title { font-size: 16px; font-weight: 600; border-left: 3px solid var(--brand-color); padding-left: 8px; line-height: 1; }
     .list-more { font-size: 13px; color: var(--text-3); }
 
-    /* 工作卡片 */
-    .job-card { background: #fff; border-radius: 12px; padding: 16px; margin-bottom: 12px; }
+    /* 工作卡片扁平化 */
+    .job-card { background: #fff; border-radius: 12px; padding: 16px; margin-bottom: 12px; border: 1px solid var(--border-color); }
     .job-title-row { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
-    .job-title { font-size: 17px; font-weight: 600; display: flex; align-items: center; gap: 6px; }
-    .badge { background: #ff4d4f; color: #fff; font-size: 10px; padding: 1px 4px; border-radius: 4px; font-weight: normal; }
-    .job-salary { color: #ff4d4f; font-size: 16px; font-weight: 600; }
-    .job-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
-    .job-tags span { background: #f5f6f8; color: var(--text-2); font-size: 12px; padding: 2px 6px; border-radius: 4px; }
-    .job-info p { font-size: 13px; color: var(--text-2); margin-bottom: 6px; display: flex; align-items: flex-start; gap: 4px; }
-    .job-info p span { color: var(--text-3); }
-    .job-footer { display: flex; justify-content: flex-end; margin-top: 12px; }
-    .btn-apply { background: #4b89ff; color: #fff; border: none; padding: 8px 16px; border-radius: 6px; font-size: 14px; cursor: pointer; }
-    .btn-apply:disabled { background: #ccc; }
+    .job-title { font-size: 16px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+    .badge { background: var(--bg-base); color: var(--danger); font-size: 11px; padding: 2px 6px; border-radius: 4px; font-weight: 500; border: 1px solid var(--border-color); }
+    .job-salary { color: var(--danger); font-size: 16px; font-weight: 600; }
+    .job-tags { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+    .job-tags span { background: var(--bg-base); color: var(--text-2); font-size: 12px; padding: 4px 8px; border-radius: 6px; border: 1px solid var(--border-color); }
+    .job-info p { font-size: 13px; color: var(--text-2); margin-bottom: 8px; display: flex; align-items: flex-start; gap: 6px; }
+    .job-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 12px; padding-top: 12px; border-top: 1px dashed var(--border-color); }
+    .btn-apply { background: var(--brand-light); color: var(--brand-color); border: 1px solid var(--brand-color); padding: 6px 16px; border-radius: 6px; font-size: 14px; font-weight: 500; cursor: pointer; }
+    .btn-apply:disabled { background: var(--bg-base); color: var(--text-3); border-color: var(--border-color); }
 
     /* 找活页面 */
-    .find-header { background: #fff; padding: 12px 16px; border-bottom: 1px solid var(--border-color); }
-    .search-btn-row { display: flex; background: #f5f6f8; border-radius: 6px; overflow: hidden; margin-bottom: 12px; }
-    .search-btn-row input { flex: 1; padding: 10px; font-size: 14px; }
-    .search-btn-row button { background: var(--brand-color); color: #fff; border: none; padding: 0 20px; font-size: 14px; }
-    .filter-row { display: flex; justify-content: space-between; font-size: 14px; color: var(--text-2); }
+    .find-header { background: #fff; padding: 16px; border-bottom: 1px solid var(--border-color); }
+    .search-btn-row { display: flex; background: var(--bg-base); border-radius: 8px; overflow: hidden; margin-bottom: 14px; border: 1px solid var(--border-color); }
+    .search-btn-row input { flex: 1; padding: 12px; font-size: 14px; background: #fff; }
+    .search-btn-row button { background: var(--brand-color); color: #fff; border: none; padding: 0 24px; font-size: 14px; font-weight: 500; }
+    .filter-row { display: flex; justify-content: space-between; font-size: 14px; color: var(--text-2); font-weight: 500; }
     .filter-item { display: flex; align-items: center; gap: 4px; }
 
     /* 工单页面 */
-    .order-header { background: var(--brand-color); padding: 12px 16px 20px; color: #fff; }
-    .order-top { display: flex; justify-content: center; align-items: center; margin-bottom: 16px; font-size: 18px; }
-    .empty-state { text-align: center; padding: 100px 0; color: var(--text-3); font-size: 15px; }
+    .order-header { background: #fff; padding: 16px; border-bottom: 1px solid var(--border-color); }
+    .order-top { display: flex; justify-content: center; align-items: center; font-size: 18px; font-weight: 600; }
+    .empty-state { text-align: center; padding: 120px 0; color: var(--text-3); font-size: 14px; }
 
     /* 我的页面 */
-    .mine-header { background: var(--brand-color); padding: 30px 20px 60px; color: #fff; border-radius: 0 0 20px 20px; }
+    .mine-header { background: var(--brand-color); padding: 30px 20px 60px; color: #fff; border-radius: 0 0 16px 16px; }
     .user-profile { display: flex; align-items: center; justify-content: space-between; }
-    .user-left { display: flex; align-items: center; gap: 12px; }
-    .avatar-box { width: 64px; height: 64px; background: #fff; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 30px; }
-    .user-info h3 { font-size: 20px; font-weight: 500; margin-bottom: 4px; }
+    .user-left { display: flex; align-items: center; gap: 16px; cursor: pointer; }
+    .avatar-box { width: 60px; height: 60px; background: #fff; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 24px; color: var(--brand-color); font-weight: bold; }
+    .user-info h3 { font-size: 20px; font-weight: 600; margin-bottom: 4px; }
     .user-info p { font-size: 13px; opacity: 0.9; }
-    .btn-recruit { background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.4); color: #fff; padding: 6px 12px; border-radius: 16px; font-size: 12px; }
+    .btn-recruit { background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3); color: #fff; padding: 6px 12px; border-radius: 6px; font-size: 13px; font-weight: 500; cursor: pointer; }
 
-    .apply-card { background: linear-gradient(135deg, #3b7cff, #2b65f7); margin: -30px 16px 16px; padding: 16px; border-radius: 16px; color: #fff; box-shadow: 0 4px 12px rgba(43,101,247,0.2); }
-    .apply-title { font-size: 16px; font-weight: bold; margin-bottom: 12px; }
+    .apply-card { background: #fff; margin: -30px 16px 16px; padding: 16px; border-radius: 12px; position: relative; z-index: 10; border: 1px solid var(--border-color); }
+    .apply-title { font-size: 16px; font-weight: 600; margin-bottom: 12px; color: var(--text-1); }
     .apply-row { display: flex; gap: 12px; }
-    .apply-item { flex: 1; background: #fff; border-radius: 12px; padding: 16px; display: flex; align-items: center; gap: 10px; color: var(--text-1); cursor: pointer; }
-    .apply-icon { font-size: 24px; }
-    .apply-text { font-size: 15px; font-weight: bold; }
+    .apply-item { flex: 1; background: var(--bg-base); border-radius: 8px; padding: 16px; display: flex; align-items: center; gap: 12px; color: var(--text-1); cursor: pointer; border: 1px solid var(--border-color); }
+    .apply-icon { color: var(--brand-color); }
+    .apply-text { font-size: 15px; font-weight: 500; }
 
-    /* 九宫格 */
-    .grid-menu { background: #fff; margin: 0 16px 20px; border-radius: 16px; padding: 20px 10px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
-    .grid-item { text-align: center; cursor: pointer; }
-    .grid-icon-wrap { width: 48px; height: 48px; border-radius: 50%; margin: 0 auto 8px auto; display: flex; justify-content: center; align-items: center; font-size: 24px; color: #fff; }
-    .grid-text { font-size: 13px; color: var(--text-1); }
+    /* 九宫格扁平化且统一蓝底白字 */
+    .grid-menu { background: #fff; margin: 0 16px 20px; border-radius: 12px; padding: 20px 10px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px 10px; border: 1px solid var(--border-color); }
+    .grid-item { text-align: center; cursor: pointer; display: flex; flex-direction: column; align-items: center; }
+    /* 统一蓝色底色，白色图标 */
+    .grid-icon-wrap { width: 48px; height: 48px; border-radius: 12px; margin-bottom: 8px; display: flex; justify-content: center; align-items: center; background: var(--brand-color); color: #ffffff; }
+    .grid-text { font-size: 13px; font-weight: 500; color: var(--text-1); }
 
-    .logout-wrap { padding: 0 16px 30px; }
-    .btn-logout { width: 100%; padding: 14px; background: #fff; color: var(--danger); border: none; border-radius: 12px; font-size: 16px; font-weight: bold; }
+    .logout-wrap { padding: 0 16px 40px; }
+    .btn-logout { width: 100%; padding: 14px; background: #fff; color: var(--danger); border: 1px solid var(--border-color); border-radius: 8px; font-size: 16px; font-weight: 500; cursor: pointer; }
 
     /* 登录页 */
     .login-page-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: #fff; z-index: 9999; padding: 20px; display: none; flex-direction: column; }
     .login-top-bar { display: flex; align-items: center; height: 44px; margin-bottom: 40px; }
-    .back-btn { font-size: 24px; cursor: pointer; width: 40px; }
-    .login-top-title { flex: 1; text-align: center; font-size: 17px; font-weight: 500; margin-right: 40px; }
-    .login-logo-area { text-align: center; margin-bottom: 60px; }
-    .logo-circle { width: 100px; height: 100px; background: linear-gradient(135deg, #4b89ff, #34d399); border-radius: 50%; margin: 0 auto 20px; display: flex; flex-direction: column; justify-content: center; align-items: center; color: #fff; font-weight: bold; line-height: 1.2; }
+    .back-btn { font-size: 24px; cursor: pointer; width: 40px; color: var(--text-1); }
+    .login-top-title { flex: 1; text-align: center; font-size: 17px; font-weight: 600; margin-right: 40px; }
+    .login-logo-area { text-align: center; margin-bottom: 60px; margin-top: 20px; }
+    .logo-circle { width: 80px; height: 80px; background: var(--brand-color); border-radius: 20px; margin: 0 auto 16px; display: flex; flex-direction: column; justify-content: center; align-items: center; color: #fff; font-weight: bold; line-height: 1.2; }
     .logo-circle .top { font-size: 24px; }
     .logo-circle .bottom { font-size: 12px; }
-    .login-title { font-size: 24px; font-weight: 600; margin-bottom: 8px; }
-    .login-btns { display: flex; flex-direction: column; gap: 20px; padding: 0 20px; }
-    .btn-login-user { background: var(--brand-color); color: #fff; border: none; border-radius: 30px; padding: 16px; font-size: 18px; }
-    .btn-login-company { background: #f5f8ff; color: var(--brand-color); border: 1px solid #e8f0fe; border-radius: 30px; padding: 16px; font-size: 18px; }
-    .login-agreement { margin-top: auto; padding-bottom: 30px; display: flex; gap: 8px; font-size: 12px; color: var(--text-2); justify-content: center; }
+    .login-title { font-size: 24px; font-weight: bold; margin-bottom: 8px; letter-spacing: 1px; }
+    .login-btns { display: flex; flex-direction: column; gap: 16px; padding: 0 20px; }
+    .btn-login-user { background: var(--brand-color); color: #fff; border: none; border-radius: 8px; padding: 16px; font-size: 16px; font-weight: 500; cursor: pointer; }
+    .btn-login-company { background: var(--brand-light); color: var(--brand-color); border: 1px solid var(--brand-color); border-radius: 8px; padding: 16px; font-size: 16px; font-weight: 500; cursor: pointer; }
+    .login-agreement { margin-top: auto; padding-bottom: 30px; display: flex; gap: 8px; font-size: 12px; color: var(--text-3); justify-content: center; }
+    .login-agreement input[type="checkbox"] { margin-top: 3px; width: 16px; height: 16px; accent-color: var(--brand-color); }
+    .login-agreement a { color: var(--brand-color); text-decoration: none; }
 
-    /* 内部通用弹窗 */
+    /* 内部通用弹窗与表单 */
     .overlay-page { position: fixed; top: 0; left: 0; right: 0; bottom: 60px; background: var(--bg-base); z-index: 500; overflow-y: auto; display: none; }
     .overlay-page.active { display: block; }
-    .overlay-header { background: #fff; padding: 12px 16px; display: flex; align-items: center; border-bottom: 1px solid var(--border-color); position: sticky; top: 0; z-index: 10; }
-    .overlay-header .back { font-size: 22px; margin-right: 12px; cursor: pointer; }
+    .overlay-header { background: #fff; padding: 16px; display: flex; align-items: center; border-bottom: 1px solid var(--border-color); position: sticky; top: 0; z-index: 10; }
+    .overlay-header .back { font-size: 22px; margin-right: 16px; cursor: pointer; color: var(--text-1); }
     .overlay-title { font-size: 17px; font-weight: 600; }
     .overlay-content { padding: 16px; }
 
-    /* 表单样式 */
-    .form-group { background: #fff; border-radius: 12px; padding: 16px; margin-bottom: 16px; }
-    .form-label { font-size: 14px; font-weight: 500; margin-bottom: 8px; display: block; }
-    .form-input { width: 100%; background: #f5f6f8; padding: 12px; border-radius: 8px; font-size: 14px; margin-bottom: 16px; }
-    .btn-submit { width: 100%; padding: 14px; background: var(--brand-color); color: #fff; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; }
+    .form-group { background: #fff; border-radius: 12px; padding: 20px; margin-bottom: 16px; border: 1px solid var(--border-color); }
+    .form-label { font-size: 14px; font-weight: 500; margin-bottom: 8px; display: block; color: var(--text-1); }
+    .form-input { width: 100%; background: #fff; padding: 14px; border-radius: 8px; font-size: 15px; margin-bottom: 20px; border: 1px solid var(--border-color); }
+    .form-input:focus { border-color: var(--brand-color); }
+    .btn-submit { width: 100%; padding: 16px; background: var(--brand-color); color: #fff; border: none; border-radius: 8px; font-size: 16px; font-weight: 500; cursor: pointer; }
 
-    /* 列表项样式 */
-    .list-item-card { background: #fff; padding: 16px; border-radius: 12px; margin-bottom: 10px; border-left: 4px solid var(--brand-color); }
-    .list-item-card.disabled { border-left-color: #ccc; opacity: 0.7; }
-    .list-item-header { display: flex; justify-content: space-between; margin-bottom: 8px; font-weight: bold; font-size: 15px; }
-    .list-item-desc { font-size: 12px; color: var(--text-3); margin-top: 4px; }
+    /* 列表项 */
+    .list-item-card { background: #fff; padding: 16px; border-radius: 12px; margin-bottom: 12px; border: 1px solid var(--border-color); border-left: 4px solid var(--brand-color); }
+    .list-item-header { display: flex; justify-content: space-between; margin-bottom: 10px; font-weight: 600; font-size: 16px; }
+    .list-item-desc { font-size: 13px; color: var(--text-3); margin-top: 6px; }
 
-    .toast { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.7); color: #fff; padding: 10px 20px; border-radius: 8px; z-index: 10000; font-size: 14px; display: none; }
+    .toast { position: fixed; top: 40%; left: 50%; transform: translate(-50%, -50%); background: #111827; color: #fff; padding: 12px 24px; border-radius: 8px; z-index: 10000; font-size: 14px; font-weight: 500; display: none; }
   </style>
 </head>
 <body>
@@ -151,22 +177,34 @@
   <div class="home-header">
     <div class="home-top">
       <span>XX零工市场</span>
-      <span style="letter-spacing:2px;">...</span>
     </div>
     <div class="home-search">
       <div class="city-select">登封市 <span>▼</span></div>
       <div class="search-box">
-        <span>🔍</span>
+        <svg class="svg-icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
         <input type="text" placeholder="搜索符合的个人简历">
       </div>
     </div>
   </div>
 
   <div class="category-card">
-    <div class="cat-item"><div class="cat-icon-wrap" style="background:#f87171;">💼</div><div class="cat-text">简单好做</div></div>
-    <div class="cat-item"><div class="cat-icon-wrap" style="background:#60a5fa;">🎖️</div><div class="cat-text">专业技能</div></div>
-    <div class="cat-item"><div class="cat-icon-wrap" style="background:#fbbf24;">🛠️</div><div class="cat-text">家装服务</div></div>
-    <div class="cat-item"><div class="cat-icon-wrap" style="background:#34d399;">🏠</div><div class="cat-text">室内工作</div></div>
+    <!-- 统一蓝色底色，白色图形 -->
+    <div class="cat-item">
+      <div class="cat-icon-wrap"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M20 7h-4V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2zM10 5h4v2h-4V5z"></path></svg></div>
+      <div class="cat-text">简单好做</div>
+    </div>
+    <div class="cat-item">
+      <div class="cat-icon-wrap"><svg class="svg-icon" viewBox="0 0 24 24"><circle cx="12" cy="8" r="7"></circle><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"></polyline></svg></div>
+      <div class="cat-text">专业技能</div>
+    </div>
+    <div class="cat-item">
+      <div class="cat-icon-wrap"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path></svg></div>
+      <div class="cat-text">家装服务</div>
+    </div>
+    <div class="cat-item">
+      <div class="cat-icon-wrap"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg></div>
+      <div class="cat-text">室内工作</div>
+    </div>
   </div>
 
   <div class="list-tabs">
@@ -196,7 +234,7 @@
       <div class="filter-item">行业类型 <span>▼</span></div>
     </div>
   </div>
-  <div class="list-section" style="padding-top:12px; padding-bottom:20px;">
+  <div class="list-section" style="padding-top:16px; padding-bottom:20px;">
     <div id="find-job-list"></div>
   </div>
 </div>
@@ -220,7 +258,7 @@
           <p id="mine-phone">点击此处登录</p>
         </div>
       </div>
-      <div class="btn-recruit" id="top-action-btn" onclick="handleTopAction()">👤 我要招工</div>
+      <div class="btn-recruit" id="top-action-btn" onclick="handleTopAction()">我要招工</div>
     </div>
   </div>
 
@@ -228,11 +266,15 @@
     <div class="apply-title" id="card-title">我的申请单</div>
     <div class="apply-row">
       <div class="apply-item" id="card-item-1" onclick="handleCardAction(1)">
-        <div class="apply-icon">🛡️</div>
+        <div class="apply-icon">
+          <svg class="svg-icon" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+        </div>
         <div><div class="apply-text" id="card-item-1-text">邀请我的</div></div>
       </div>
       <div class="apply-item" id="card-item-2" onclick="handleCardAction(2)">
-        <div class="apply-icon">✉️</div>
+        <div class="apply-icon">
+          <svg class="svg-icon" viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+        </div>
         <div><div class="apply-text" id="card-item-2-text">我的投递</div></div>
       </div>
     </div>
@@ -241,19 +283,19 @@
   <!-- 1. 求职者菜单 -->
   <div class="grid-menu" id="menu-user" style="display: none;">
     <div class="grid-item" onclick="handleTaskClick()">
-      <div class="grid-icon-wrap" style="background:#60a5fa;">🎯</div>
+      <div class="grid-icon-wrap"><svg class="svg-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg></div>
       <div class="grid-text">日常签到</div>
     </div>
     <div class="grid-item" onclick="handleExchangeClick()">
-      <div class="grid-icon-wrap" style="background:#fbbf24;">¥</div>
+      <div class="grid-icon-wrap"><svg class="svg-icon" viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg></div>
       <div class="grid-text">工单管理</div>
     </div>
     <div class="grid-item" onclick="handleReferralClick()">
-      <div class="grid-icon-wrap" style="background:#a78bfa;">🤝</div>
+      <div class="grid-icon-wrap"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg></div>
       <div class="grid-text">零工人脉</div>
     </div>
     <div class="grid-item" onclick="showToast('简历维护开发中')">
-      <div class="grid-icon-wrap" style="background:#34d399;">📝</div>
+      <div class="grid-icon-wrap"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg></div>
       <div class="grid-text">简历维护</div>
     </div>
   </div>
@@ -261,19 +303,19 @@
   <!-- 2. 招聘方菜单 -->
   <div class="grid-menu" id="menu-company" style="display: none;">
     <div class="grid-item" onclick="showToast('信息维护开发中')">
-      <div class="grid-icon-wrap" style="background:#60a5fa;">⚙️</div>
+      <div class="grid-icon-wrap"><svg class="svg-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg></div>
       <div class="grid-text">信息维护</div>
     </div>
     <div class="grid-item" onclick="showToast('岗位管理开发中')">
-      <div class="grid-icon-wrap" style="background:#fbbf24;">📋</div>
+      <div class="grid-icon-wrap"><svg class="svg-icon" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="9" y1="3" x2="9" y2="21"></line></svg></div>
       <div class="grid-text">岗位管理</div>
     </div>
     <div class="grid-item" onclick="showToast('面试邀请开发中')">
-      <div class="grid-icon-wrap" style="background:#34d399;">💌</div>
+      <div class="grid-icon-wrap"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg></div>
       <div class="grid-text">面试邀请</div>
     </div>
     <div class="grid-item" onclick="showToast('零工评价开发中')">
-      <div class="grid-icon-wrap" style="background:#f87171;">⭐</div>
+      <div class="grid-icon-wrap"><svg class="svg-icon" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg></div>
       <div class="grid-text">零工评价</div>
     </div>
   </div>
@@ -281,15 +323,15 @@
   <!-- 3. 经纪人菜单 -->
   <div class="grid-menu" id="menu-agent" style="display: none;">
     <div class="grid-item" onclick="showToast('推荐人才开发中')">
-      <div class="grid-icon-wrap" style="background:#a78bfa;">💼</div>
+      <div class="grid-icon-wrap"><svg class="svg-icon" viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg></div>
       <div class="grid-text">推荐人才</div>
     </div>
     <div class="grid-item" onclick="handleReferralClick()">
-      <div class="grid-icon-wrap" style="background:#34d399;">🌐</div>
+      <div class="grid-icon-wrap"><svg class="svg-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg></div>
       <div class="grid-text">我的团队</div>
     </div>
     <div class="grid-item" onclick="showToast('返佣明细开发中')">
-      <div class="grid-icon-wrap" style="background:#60a5fa;">💰</div>
+      <div class="grid-icon-wrap"><svg class="svg-icon" viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2" ry="2"></rect><line x1="2" y1="10" x2="22" y2="10"></line></svg></div>
       <div class="grid-text">返佣明细</div>
     </div>
   </div>
@@ -297,15 +339,15 @@
   <!-- 4. 运营与监管菜单 -->
   <div class="grid-menu" id="menu-admin" style="display: none;">
     <div class="grid-item" onclick="showOverlay('overlay-admin')">
-      <div class="grid-icon-wrap" style="background:#f87171;">📊</div>
+      <div class="grid-icon-wrap"><svg class="svg-icon" viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg></div>
       <div class="grid-text">数据大盘</div>
     </div>
     <div class="grid-item" onclick="showToast('岗位审核开发中')">
-      <div class="grid-icon-wrap" style="background:#60a5fa;">🛡️</div>
+      <div class="grid-icon-wrap"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg></div>
       <div class="grid-text">内容审核</div>
     </div>
     <div class="grid-item" onclick="showToast('监管风控开发中')">
-      <div class="grid-icon-wrap" style="background:#fbbf24;">⚖️</div>
+      <div class="grid-icon-wrap"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg></div>
       <div class="grid-text">监管风控</div>
     </div>
   </div>
@@ -318,20 +360,24 @@
 <!-- ================= 底部导航栏 ================= -->
 <div class="bottom-nav">
   <div class="nav-item active" onclick="switchTab(0, this)">
-    <div class="nav-icon">🏠</div><div>首页</div>
+    <div class="nav-icon"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg></div>
+    <div>首页</div>
   </div>
   <div class="nav-item" onclick="switchTab(1, this)">
-    <div class="nav-icon">🔍</div><div>找活</div>
+    <div class="nav-icon"><svg class="svg-icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg></div>
+    <div>找活</div>
   </div>
   <div class="nav-item-publish" onclick="showOverlay('overlay-publish')">
-    <div class="publish-btn">+</div>
+    <div class="publish-btn"><svg class="svg-icon" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg></div>
     <div class="publish-text">发布招工</div>
   </div>
   <div class="nav-item" onclick="switchTab(3, this)">
-    <div class="nav-icon">📋</div><div>工单</div>
+    <div class="nav-icon"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg></div>
+    <div>工单</div>
   </div>
   <div class="nav-item" onclick="switchTab(4, this)">
-    <div class="nav-icon">👤</div><div>个人中心</div>
+    <div class="nav-icon"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg></div>
+    <div>个人中心</div>
   </div>
 </div>
 
@@ -351,7 +397,7 @@
     <button class="btn-login-company" onclick="doLogin('company')" style="margin-top: 12px;">招聘方登录</button>
   </div>
 
-  <div style="margin-top: 50px; text-align: center; font-size: 13px; color: var(--text-3);">
+  <div style="margin-top: 50px; text-align: center; font-size: 13px; color: var(--text-3); font-weight: 500;">
     <span style="cursor: pointer;" onclick="doLogin('agent')">经纪人</span>
     <span style="margin: 0 12px;">|</span>
     <span style="cursor: pointer;" onclick="doLogin('admin')">运营</span>
@@ -398,47 +444,47 @@
   <div class="overlay-content" id="my-apply-list"></div>
 </div>
 
-<!-- 日常签到弹窗 (原每日任务) -->
+<!-- 日常签到弹窗 -->
 <div id="overlay-tasks" class="overlay-page">
   <div class="overlay-header"><div class="back" onclick="closeOverlay('overlay-tasks')">&lt;</div><div class="overlay-title">日常签到与任务</div></div>
   <div class="overlay-content">
-    <div style="background: linear-gradient(135deg, #f6d365 0%, #fda085 100%); padding:20px; border-radius:12px; color:#fff; margin-bottom:16px; display:flex; justify-content:space-between;">
-      <div><div style="font-size:13px;">可用积分</div><div style="font-size:28px; font-weight:bold;" id="ui-points">0</div></div>
-      <div><div style="font-size:13px;">成长值</div><div style="font-size:28px; font-weight:bold;" id="ui-growth">0</div></div>
+    <div style="background: #fff; border: 1px solid var(--border-color); padding:24px; border-radius:12px; margin-bottom:16px; display:flex; justify-content:space-between;">
+      <div><div style="font-size:13px; color:var(--text-3);">可用积分</div><div style="font-size:28px; font-weight:bold; color:var(--brand-color);" id="ui-points">0</div></div>
+      <div><div style="font-size:13px; color:var(--text-3);">成长值</div><div style="font-size:28px; font-weight:bold; color:var(--success);" id="ui-growth">0</div></div>
     </div>
-    <div style="background:#fff; border-radius:12px; padding:16px; margin-bottom:16px;">
-      <div style="font-weight:bold; margin-bottom:12px;">🎯 活跃任务</div>
-      <div class="grid-menu" id="task-list" style="grid-template-columns: repeat(3,1fr); padding:0; margin:0; box-shadow:none;"></div>
+    <div style="background:#fff; border-radius:12px; padding:20px; margin-bottom:16px; border: 1px solid var(--border-color);">
+      <div style="font-weight:600; margin-bottom:16px;">活跃任务</div>
+      <div class="grid-menu" id="task-list" style="grid-template-columns: repeat(3,1fr); padding:0; margin:0; border:none;"></div>
     </div>
-    <div style="background:#fff; border-radius:12px; padding:16px;">
-      <div style="font-weight:bold; margin-bottom:12px;">📺 看视频赚积分</div>
+    <div style="background:#fff; border-radius:12px; padding:20px; border: 1px solid var(--border-color);">
+      <div style="font-weight:600; margin-bottom:16px;">看视频赚积分</div>
       <div id="ad-list"></div>
     </div>
   </div>
 </div>
 
-<!-- 工单管理弹窗 (原积分明细) -->
+<!-- 工单管理弹窗 -->
 <div id="overlay-exchange" class="overlay-page">
   <div class="overlay-header"><div class="back" onclick="closeOverlay('overlay-exchange')">&lt;</div><div class="overlay-title">工单管理</div></div>
-  <div class="overlay-content"><div id="exchange-list" style="color:#666; font-size:14px; text-align:center; padding:20px 0;">加载中...</div></div>
+  <div class="overlay-content"><div id="exchange-list" style="color:var(--text-2); font-size:14px; text-align:center; padding:40px 0;">加载中...</div></div>
 </div>
 
-<!-- 零工人脉弹窗 (原打工人脉) -->
+<!-- 零工人脉弹窗 -->
 <div id="overlay-referral" class="overlay-page">
   <div class="overlay-header"><div class="back" onclick="closeOverlay('overlay-referral')">&lt;</div><div class="overlay-title">零工人脉</div></div>
-  <div class="overlay-content"><div id="referral-list" style="color:#666; font-size:14px; text-align:center; padding:20px 0;">加载中...</div></div>
+  <div class="overlay-content"><div id="referral-list" style="color:var(--text-2); font-size:14px; text-align:center; padding:40px 0;">加载中...</div></div>
 </div>
 
 <!-- 平台管理后台 -->
 <div id="overlay-admin" class="overlay-page">
   <div class="overlay-header"><div class="back" onclick="closeOverlay('overlay-admin')">&lt;</div><div class="overlay-title">平台管理</div></div>
   <div class="overlay-content">
-    <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:16px;">
-      <div style="background:#fff; border-radius:12px; padding:16px; text-align:center;"><div style="font-size:12px; color:#888;">用户总数</div><div style="font-size:24px; font-weight:bold; margin-top:4px;" id="dash-users">0</div></div>
-      <div style="background:#fff; border-radius:12px; padding:16px; text-align:center;"><div style="font-size:12px; color:#888;">总发放积分</div><div style="font-size:24px; font-weight:bold; color:var(--success); margin-top:4px;" id="dash-points">0</div></div>
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:20px;">
+      <div style="background:#fff; border-radius:12px; padding:20px; text-align:center; border: 1px solid var(--border-color);"><div style="font-size:13px; color:var(--text-3); font-weight:500;">用户总数</div><div style="font-size:28px; font-weight:bold; margin-top:8px; color:var(--brand-color);" id="dash-users">0</div></div>
+      <div style="background:#fff; border-radius:12px; padding:20px; text-align:center; border: 1px solid var(--border-color);"><div style="font-size:13px; color:var(--text-3); font-weight:500;">总发放积分</div><div style="font-size:28px; font-weight:bold; color:var(--success); margin-top:8px;" id="dash-points">0</div></div>
     </div>
-    <div style="background:#fff; border-radius:12px; padding:16px;">
-      <div style="display:flex; justify-content:space-between; margin-bottom:12px;"><div style="font-weight:bold;">用户列表</div><button onclick="loadAdminUsers()" style="background:#eee; border:none; padding:4px 8px; border-radius:4px; font-size:12px;">刷新</button></div>
+    <div style="background:#fff; border-radius:12px; padding:20px; border: 1px solid var(--border-color);">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;"><div style="font-weight:600; font-size:16px;">用户列表</div><button onclick="loadAdminUsers()" style="background:var(--bg-base); border:1px solid var(--border-color); padding:6px 12px; border-radius:6px; font-size:13px; font-weight:500; color:var(--text-2);">刷新</button></div>
       <div id="admin-user-list"></div>
     </div>
   </div>
@@ -536,25 +582,25 @@
 
       if (type === 'user') {
         document.getElementById('menu-user').style.display = 'grid';
-        topBtn.innerHTML = '👤 我要招工';
+        topBtn.innerHTML = '我要招工';
         cardTitle.innerText = '我的申请单';
         item1.innerText = '邀请我的';
         item2.innerText = '我的投递';
         overlayApplyTitle.innerText = '我的投递';
       } else if (type === 'company') {
         document.getElementById('menu-company').style.display = 'grid';
-        topBtn.innerHTML = '🏢 我的备案';
+        topBtn.innerHTML = '我的备案';
         cardTitle.innerText = '用工服务';
         item1.innerText = '发布职位';
         item2.innerText = '收到简历';
         overlayApplyTitle.innerText = '收到简历';
       } else if (type === 'agent') {
         document.getElementById('menu-agent').style.display = 'grid';
-        topBtn.innerHTML = '💼 我的团队';
+        topBtn.innerHTML = '我的团队';
         cardTitle.innerText = '业务概览';
       } else if (type === 'admin' || type === 'super') {
         document.getElementById('menu-admin').style.display = 'grid';
-        topBtn.innerHTML = '⚙️ 系统设置';
+        topBtn.innerHTML = '系统设置';
         cardTitle.innerText = '平台概览';
       }
 
@@ -609,7 +655,7 @@
       const data = await api('/api/jobs/list');
       let html = '';
       if (!data || data.length === 0) {
-        html = '<div style="text-align:center; padding:40px; color:#999;">暂无招工信息，快去发布第一条吧！</div>';
+        html = '<div style="text-align:center; padding:40px; color:var(--text-3);">暂无招工信息，快去发布第一条吧！</div>';
       } else {
         data.forEach(job => {
           const tagsHtml = job.tags.map(t => `<span>${t}</span>`).join('');
@@ -624,8 +670,8 @@
                 <p>📍 <span>工作地点：</span>${job.location}</p>
                 <p>🕒 <span>发布时间：</span>${job.created_at}</p>
               </div>
-              <div class="job-footer" style="display:flex; justify-content:space-between; align-items:center;">
-                <span style="font-size:12px; color:#999;">发布者：${job.publisher}</span>
+              <div class="job-footer">
+                <span style="font-size:12px; color:var(--text-3);">发布者：${job.publisher}</span>
                 <button class="btn-apply" onclick="applyJob(${job.id}, this)">在线投递</button>
               </div>
             </div>
@@ -675,11 +721,11 @@
 
   async function loadMyApplications() {
     const listEl = document.getElementById('my-apply-list');
-    listEl.innerHTML = '加载中...';
+    listEl.innerHTML = '<div style="text-align:center; padding:40px; color:var(--text-3);">加载中...</div>';
     try {
       const data = await api('/api/jobs/my-applications');
       if (!data || data.length === 0) {
-        listEl.innerHTML = '<div style="text-align:center; padding:40px; color:#999;">你还没有投递过工作哦~</div>';
+        listEl.innerHTML = '<div style="text-align:center; padding:40px; color:var(--text-3);">你还没有投递过工作哦~</div>';
         return;
       }
       let html = '';
@@ -691,17 +737,17 @@
               <span>${item.title}</span>
               <span style="color:var(--brand-color);">${item.salary}</span>
             </div>
-            <div style="font-size:13px; color:#666;">地点：${item.location}</div>
-            <div class="list-item-desc" style="display:flex; justify-content:space-between; margin-top:8px;">
+            <div style="font-size:13px; color:var(--text-2);">地点：${item.location}</div>
+            <div class="list-item-desc" style="display:flex; justify-content:space-between; align-items:center;">
               <span>投递时间：${item.created_at}</span>
-              <span style="color:${isPending ? '#faad14' : 'var(--success)'};">状态：${item.status}</span>
+              <span style="color:${isPending ? 'var(--warning)' : 'var(--success)'}; font-weight:500;">状态：${item.status}</span>
             </div>
           </div>
         `;
       });
       listEl.innerHTML = html;
     } catch (e) {
-      listEl.innerHTML = '<div style="text-align:center; color:red;">加载失败</div>';
+      listEl.innerHTML = '<div style="text-align:center; color:var(--danger); padding:40px;">加载失败</div>';
     }
   }
 
@@ -717,6 +763,7 @@
       document.getElementById('ui-growth').innerText = data.growth_value;
     } catch (e) {}
   }
+
   async function loadTasks() {
     try {
       const data = await api('/api/tasks/today');
@@ -727,30 +774,33 @@
         if(k === '_raw') continue;
         const isDone = data[k] > 0;
         html += `<div class="grid-item" onclick="${isDone?'':'doTask(\''+k+'\')'}" style="opacity:${isDone?'0.5':'1'}">
-            <div style="font-size:13px; font-weight:bold; margin-bottom:4px;">${map[k] || k}</div>
-            <div style="color:var(--danger); font-size:12px; font-weight:bold;">+${pts[k] || 0}</div>
+            <div class="grid-icon-wrap"><svg class="svg-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg></div>
+            <div style="font-size:13px; font-weight:500; margin-bottom:6px; color:var(--text-1);">${map[k] || k}</div>
+            <div style="color:var(--danger); font-size:13px; font-weight:600;">+${pts[k] || 0}</div>
           </div>`;
       }
       document.getElementById('task-list').innerHTML = html;
     } catch (e) {}
   }
+
   async function doTask(code) {
     try { await api('/api/tasks/' + code, 'POST'); showToast('任务完成'); loadUserStats(); loadTasks(); } catch (e) {}
   }
+
   async function loadAds() {
     try {
       const data = await api('/api/ads/status');
       let html = '';
       data.groups.forEach(g => {
         const percent = (g.current / 10) * 100;
-        html += `<div style="margin-bottom: 16px;">
-            <div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 6px;">
-              <span>第 ${g.id} 组</span><span>${g.current} / 10 ${g.settled ? '(已完成)' : ''}</span>
+        html += `<div style="margin-bottom: 20px;">
+            <div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 8px; font-weight:500;">
+              <span>第 ${g.id} 组</span><span style="color:var(--text-3);">${g.current} / 10 ${g.settled ? '(已完成)' : ''}</span>
             </div>
-            <div style="height:6px; background:#eee; border-radius:3px; overflow:hidden; margin-bottom:8px;">
-              <div style="height:100%; width:${percent}%; background:${g.settled?'#52c41a':'#2b65f7'};"></div>
+            <div style="height:6px; background:var(--bg-base); border-radius:4px; overflow:hidden; margin-bottom:10px;">
+              <div style="height:100%; border-radius:4px; width:${percent}%; background:${g.settled?'var(--success)':'var(--brand-color)'}; transition:width 0.3s ease;"></div>
             </div>
-            <button style="width:100%; padding:8px; border:none; border-radius:6px; background:${g.settled?'#eee':'#2b65f7'}; color:${g.settled?'#999':'#fff'};" ${g.settled ? 'disabled' : ''} onclick="watchAd(${g.id})">
+            <button style="width:100%; padding:10px; border:1px solid var(--border-color); border-radius:8px; font-size:14px; font-weight:500; background:${g.settled?'#f9fafb':'#fff'}; color:${g.settled?'var(--text-3)':'var(--brand-color)'};" ${g.settled ? 'disabled' : ''} onclick="watchAd(${g.id})">
               ${g.settled ? '已发放' : '模拟看完1个'}
             </button>
           </div>`;
@@ -758,6 +808,7 @@
       document.getElementById('ad-list').innerHTML = html;
     } catch (e) {}
   }
+
   async function watchAd(groupId) {
     try {
       const transId = 'WEB-' + Date.now() + '-' + Math.random().toString(36).slice(2,8);
@@ -765,6 +816,7 @@
       loadUserStats(); loadAds();
     } catch (e) {}
   }
+
   async function loadExchangeRecords() {
     const listEl = document.getElementById('exchange-list');
     try {
@@ -773,14 +825,15 @@
       let html = '';
       data.forEach(item => {
         const isEarn = item.points > 0;
-        html += `<div style="display:flex; justify-content:space-between; padding:12px 0; border-bottom:1px solid #f5f5f5;">
-            <div><div style="font-weight:500;">${item.remark || '任务奖励'}</div><div style="font-size:12px; color:#999;">${item.created_at}</div></div>
-            <div style="font-weight:bold; color:${isEarn ? 'var(--success)' : 'var(--danger)'};">${isEarn ? '+' : ''}${item.points}</div>
+        html += `<div style="display:flex; justify-content:space-between; padding:16px 0; border-bottom:1px solid var(--border-color);">
+            <div><div style="font-weight:500; font-size:15px;">${item.remark || '任务奖励'}</div><div style="font-size:12px; color:var(--text-3); margin-top:4px;">${item.created_at}</div></div>
+            <div style="font-weight:600; font-size:16px; color:${isEarn ? 'var(--success)' : 'var(--danger)'};">${isEarn ? '+' : ''}${item.points}</div>
           </div>`;
       });
       listEl.innerHTML = html;
     } catch (e) { listEl.innerHTML = '加载失败'; }
   }
+
   async function loadReferralDownlines() {
     const listEl = document.getElementById('referral-list');
     try {
@@ -789,14 +842,15 @@
       let html = '';
       data.forEach(item => {
         const isSettled = item.settled === 1;
-        html += `<div style="display:flex; justify-content:space-between; padding:12px 0; border-bottom:1px solid #f5f5f5;">
-            <div><div style="font-weight:500;">${item.user_phone.replace(/(\d{3})\d{4}(\d{4})/, '$1****$2')}</div><div style="font-size:12px; color:#999;">${item.created_at}</div></div>
-            <div style="font-size:12px; padding:4px 8px; border-radius:4px; background:${isSettled ? '#f6ffed' : '#fffbe6'}; color:${isSettled ? 'var(--success)' : '#faad14'}; border:1px solid ${isSettled ? '#b7eb8f' : '#ffe58f'};">${isSettled ? '已生效' : '待生效'}</div>
+        html += `<div style="display:flex; justify-content:space-between; padding:16px 0; border-bottom:1px solid var(--border-color); align-items:center;">
+            <div><div style="font-weight:500; font-size:15px;">${item.user_phone.replace(/(\d{3})\d{4}(\d{4})/, '$1****$2')}</div><div style="font-size:12px; color:var(--text-3); margin-top:4px;">${item.created_at}</div></div>
+            <div style="font-size:12px; font-weight:500; padding:4px 8px; border-radius:4px; border:1px solid ${isSettled ? 'var(--success)' : 'var(--warning)'}; color:${isSettled ? 'var(--success)' : 'var(--warning)'};">${isSettled ? '已生效' : '待生效'}</div>
           </div>`;
       });
       listEl.innerHTML = html;
     } catch (e) { listEl.innerHTML = '加载失败'; }
   }
+
   async function loadAdminDashboard() {
     try {
       const data = await api('/api/admin/dashboard');
@@ -804,20 +858,22 @@
       document.getElementById('dash-points').innerText = data.total_points || 0;
     } catch (e) {}
   }
+
   async function loadAdminUsers() {
     try {
       const data = await api('/api/admin/users');
       let html = '';
       data.forEach(u => {
-        html += `<div style="display:flex; justify-content:space-between; padding:12px 0; border-bottom:1px solid #eee;">
-          <div>${u.phone}</div>
-          <div style="color:#52c41a; font-weight:bold;">${u.available_points}分</div>
-          <button style="border:1px solid #2b65f7; color:#2b65f7; background:none; padding:2px 8px; border-radius:4px;" onclick="addPoints(${u.id})">+100分</button>
+        html += `<div style="display:flex; justify-content:space-between; align-items:center; padding:16px 0; border-bottom:1px solid var(--border-color);">
+          <div style="font-weight:500;">${u.phone}</div>
+          <div style="color:var(--success); font-weight:600; font-size:15px;">${u.available_points}分</div>
+          <button style="border:1px solid var(--border-color); color:var(--text-1); background:#fff; padding:4px 10px; border-radius:6px; font-size:12px; font-weight:500;" onclick="addPoints(${u.id})">+100分</button>
         </div>`;
       });
       document.getElementById('admin-user-list').innerHTML = html;
     } catch (e) {}
   }
+
   async function addPoints(uid) {
     try {
       await api('/api/admin/add-points', 'POST', { userId: uid, points: 100, remark: '后台加分' });
