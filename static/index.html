@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>测试版 - 极简无依赖</title>
+  <style>
+    body { font-family: sans-serif; padding: 20px; background: #f0f2f5; }
+    .card { background: #fff; padding: 20px; margin-bottom: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+    input, button { padding: 8px; margin: 5px 0; }
+    pre { background: #333; color: #0f0; padding: 10px; border-radius: 4px; overflow-x: auto; }
+  </style>
+</head>
+<body>
+  <h2>看广告赚积分 - 极简测试台</h2>
+
+  <div class="card">
+    <h3>C端测试</h3>
+    <input id="userPhone" value="13800000001" placeholder="手机号">
+    <button onclick="loginUser()">登录 C端</button>
+    <br>
+    <button onclick="doTask('signin')">签到 (+1)</button>
+    <button onclick="doTask('moments')">发朋友圈 (+3)</button>
+    <button onclick="watchAd()">看广告 (+5)</button>
+    <button onclick="getUserInfo()">刷新个人信息</button>
+  </div>
+
+  <div class="card">
+    <h3>B端门店测试</h3>
+    <button onclick="loginStore()">登录门店 (store001)</button>
+    <br>
+    <input id="verifyPhone" value="13800000001" placeholder="用户手机号">
+    <input id="verifyPoints" value="10" type="number" placeholder="核销积分">
+    <button onclick="doVerify()">确认核销</button>
+  </div>
+
+  <div class="card">
+    <h3>运行日志</h3>
+    <pre id="log">等待操作...</pre>
+  </div>
+
+  <script>
+    let userToken = '';
+    let storeToken = '';
+
+    function log(msg, data) {
+      const text = data ? JSON.stringify(data, null, 2) : '';
+      document.getElementById('log').innerText = `[${new Date().toLocaleTimeString()}] ${msg}\n${text}\n\n` + document.getElementById('log').innerText;
+    }
+
+    async function api(path, method='GET', body=null, role='user') {
+      const headers = { 'Content-Type': 'application/json' };
+      const token = role === 'user' ? userToken : storeToken;
+      if (token) headers['Authorization'] = 'Bearer ' + token;
+      const res = await fetch(path, { method, headers, body: body ? JSON.stringify(body) : null });
+      const data = await res.json();
+      if (data.code !== 0) throw new Error(data.message || '请求失败');
+      return data.data;
+    }
+
+    async function loginUser() {
+      try {
+        const phone = document.getElementById('userPhone').value;
+        const res = await api('/api/auth/login', 'POST', { role: 'user', phone, code: '123456' });
+        userToken = res.token;
+        log('C端登录成功', res.user);
+      } catch (e) { log('C端登录失败', e.message); }
+    }
+
+    async function loginStore() {
+      try {
+        const res = await api('/api/auth/login', 'POST', { role: 'store', storeCode: 'store001' });
+        storeToken = res.token;
+        log('B端登录成功', res.store);
+      } catch (e) { log('B端登录失败', e.message); }
+    }
+
+    async function getUserInfo() {
+      try {
+        const res = await api('/api/user/me');
+        log('用户信息', res);
+      } catch (e) { log('获取失败', e.message); }
+    }
+
+    async function doTask(code) {
+      try {
+        const res = await api('/api/tasks/' + code, 'POST');
+        log('任务完成', res);
+        getUserInfo();
+      } catch (e) { log('任务失败', e.message); }
+    }
+
+    async function watchAd() {
+      try {
+        const res = await api('/api/ads/pre-reward', 'POST', { adGroupId: 1, transId: 'test_' + Date.now() });
+        log('广告观看记录', res);
+        getUserInfo();
+      } catch (e) { log('广告失败', e.message); }
+    }
+
+    async function doVerify() {
+      try {
+        const phone = document.getElementById('verifyPhone').value;
+        const points = parseInt(document.getElementById('verifyPoints').value);
+        const res = await api('/api/verify/confirm', 'POST', { phone, totalPoints: points, verifyCode: '123' }, 'store');
+        log('核销成功', res);
+      } catch (e) { log('核销失败', e.message); }
+    }
+  </script>
+</body>
+</html>

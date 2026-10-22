@@ -1,0 +1,9 @@
+[project]
+project_type = "web"
+name = "ad-points-app"
+description = "看广告赚积分 App（C端看广告 / B端门店核销 / A端后台）"
+requires = ["python-3.11"]
+
+[deploy]
+build = "bash scripts/build.sh"
+run = "bash scripts/run.sh"
