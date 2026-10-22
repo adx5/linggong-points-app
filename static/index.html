@@ -2,413 +2,835 @@
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>零工获取积分App - 纯净版</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>XX零工市场</title>
   <style>
+    /* ================= 全局重置 ================= */
     :root {
-      --primary: #409eff; --success: #67c23a; --warning: #e6a23c; --danger: #f56c6c;
-      --text-main: #303133; --text-sub: #909399; --bg: #f5f7fa; --border: #ebeef5;
+      --brand-color: #2b65f7;
+      --text-1: #333333; --text-2: #666666; --text-3: #999999;
+      --bg-base: #f5f6f8; --bg-card: #ffffff; --danger: #f56c6c; --success: #52c41a; --border-color: #f0f0f0;
     }
-    body { font-family: -apple-system, "PingFang SC", "Helvetica Neue", sans-serif; margin: 0; padding: 0; background: var(--bg); color: var(--text-main); }
-    .app-header { background: linear-gradient(135deg, #409eff 0%, #36d1dc 100%); color: #fff; padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
-    .container { max-width: 800px; margin: 20px auto; padding: 0 15px; }
-    .card { background: #fff; border-radius: 10px; padding: 20px; margin-bottom: 16px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
-    .card h3 { margin: 0 0 15px 0; font-size: 16px; border-left: 4px solid var(--primary); padding-left: 10px; }
-    .form-group { margin-bottom: 15px; }
-    .form-group label { display: block; margin-bottom: 5px; font-size: 14px; color: var(--text-sub); }
-    input, select { width: 100%; box-sizing: border-box; padding: 10px; border: 1px solid var(--border); border-radius: 6px; font-size: 14px; outline: none; transition: border 0.2s; }
-    input:focus, select:focus { border-color: var(--primary); }
-    button { width: 100%; padding: 12px; border: none; border-radius: 6px; background: var(--primary); color: #fff; font-size: 15px; font-weight: 600; cursor: pointer; transition: opacity 0.2s; }
-    button:hover { opacity: 0.9; }
-    button:disabled { background: #a0cfff; cursor: not-allowed; }
-    button.danger { background: var(--danger); }
-    button.success { background: var(--success); }
-    button.outline { background: transparent; border: 1px solid var(--primary); color: var(--primary); }
-    button.small { width: auto; padding: 4px 10px; font-size: 12px; }
-    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
-    .task-item { border: 1px solid var(--border); padding: 15px; border-radius: 8px; text-align: center; cursor: pointer; background: #fafbfc; transition: all 0.2s; }
-    .task-item:hover { border-color: var(--primary); box-shadow: 0 2px 8px rgba(64,158,255,0.15); }
-    .task-item .points { color: var(--danger); font-size: 20px; font-weight: bold; margin-top: 5px; }
-    .task-item.disabled { opacity: 0.5; pointer-events: none; }
-    .log-box { background: #1e1e1e; color: #00ff00; font-family: monospace; font-size: 12px; padding: 15px; border-radius: 8px; height: 150px; overflow-y: auto; white-space: pre-wrap; }
-    .flex-between { display: flex; justify-content: space-between; align-items: center; }
-    .header-title { font-size: 18px; font-weight: bold; }
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+    body { background-color: var(--bg-base); color: var(--text-1); font-size: 14px; padding-bottom: 60px; }
     .hidden { display: none !important; }
-    .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }
-    .stat-box { background: #fff; padding: 15px; border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
-    .stat-box .label { font-size: 12px; color: var(--text-sub); }
-    .stat-box .val { font-size: 24px; font-weight: bold; color: var(--primary); margin-top: 5px; }
-    .progress-bar { height: 8px; background: var(--border); border-radius: 4px; margin-top: 10px; overflow: hidden; }
-    .progress-inner { height: 100%; background: var(--success); width: 0%; transition: width 0.3s; }
-    table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 13px; }
-    th, td { padding: 10px; text-align: left; border-bottom: 1px solid var(--border); }
-    th { background: #fafafa; font-weight: 600; }
+    input, select, textarea { outline: none; border: none; background: transparent; font-family: inherit; }
+
+    .tab-page { display: none; }
+    .tab-page.active { display: block; animation: fadeIn 0.2s ease; }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+    /* ================= 底部导航栏 ================= */
+    .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; height: 60px; background: #fff; display: flex; justify-content: space-around; align-items: center; box-shadow: 0 -1px 5px rgba(0,0,0,0.05); z-index: 100; padding-bottom: env(safe-area-inset-bottom); }
+    .nav-item { display: flex; flex-direction: column; align-items: center; font-size: 10px; color: var(--text-3); cursor: pointer; width: 20%; }
+    .nav-item.active { color: var(--brand-color); }
+    .nav-icon { font-size: 22px; margin-bottom: 2px; }
+    .nav-item-publish { position: relative; transform: translateY(-15px); width: 20%; display: flex; flex-direction: column; align-items: center; cursor: pointer; }
+    .publish-btn { width: 48px; height: 48px; background: #4b89ff; border-radius: 50%; display: flex; justify-content: center; align-items: center; color: #fff; font-size: 28px; box-shadow: 0 4px 10px rgba(43,101,247,0.3); border: 4px solid #fff; font-weight: 300; }
+    .publish-text { font-size: 10px; color: var(--text-3); margin-top: 2px; }
+
+    /* ================= 首页 ================= */
+    .home-header { background: var(--brand-color); padding: 12px 16px 60px 16px; border-radius: 0 0 20px 20px; color: #fff; position: relative; }
+    .home-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; font-size: 18px; font-weight: 500; }
+    .home-search { display: flex; gap: 10px; align-items: center; position: relative; z-index: 2; }
+    .city-select { background: #fff; color: var(--text-1); padding: 8px 10px; border-radius: 6px; font-size: 14px; display: flex; align-items: center; gap: 4px; font-weight: 500; }
+    .search-box { flex: 1; background: #fff; border-radius: 6px; display: flex; align-items: center; padding: 8px 12px; gap: 6px; }
+    .search-box input { flex: 1; font-size: 14px; color: var(--text-2); }
+
+    .category-card { background: #fff; margin: -40px 12px 12px 12px; border-radius: 12px; padding: 16px 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); position: relative; z-index: 10; display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px 8px; }
+    .cat-item { text-align: center; cursor: pointer; }
+    .cat-icon-wrap { width: 44px; height: 44px; border-radius: 50%; margin: 0 auto 6px auto; display: flex; justify-content: center; align-items: center; font-size: 22px; color: #fff; }
+    .cat-text { font-size: 13px; color: var(--text-1); }
+
+    .list-tabs { display: flex; background: #fff; margin-bottom: 10px; border-bottom: 1px solid var(--border-color); }
+    .list-tab { flex: 1; text-align: center; padding: 12px 0; font-size: 15px; font-weight: 500; color: var(--text-2); cursor: pointer; position: relative; }
+    .list-tab.active { color: var(--brand-color); }
+    .list-tab.active::after { content: ''; position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); width: 30px; height: 3px; background: var(--brand-color); border-radius: 2px; }
+
+    .list-section { padding: 0 12px; }
+    .list-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding: 0 4px; }
+    .list-title { font-size: 16px; font-weight: 600; border-left: 3px solid var(--brand-color); padding-left: 8px; line-height: 1; }
+    .list-more { font-size: 13px; color: var(--text-3); }
+
+    /* 工作卡片 */
+    .job-card { background: #fff; border-radius: 12px; padding: 16px; margin-bottom: 12px; }
+    .job-title-row { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
+    .job-title { font-size: 17px; font-weight: 600; display: flex; align-items: center; gap: 6px; }
+    .badge { background: #ff4d4f; color: #fff; font-size: 10px; padding: 1px 4px; border-radius: 4px; font-weight: normal; }
+    .job-salary { color: #ff4d4f; font-size: 16px; font-weight: 600; }
+    .job-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+    .job-tags span { background: #f5f6f8; color: var(--text-2); font-size: 12px; padding: 2px 6px; border-radius: 4px; }
+    .job-info p { font-size: 13px; color: var(--text-2); margin-bottom: 6px; display: flex; align-items: flex-start; gap: 4px; }
+    .job-info p span { color: var(--text-3); }
+    .job-footer { display: flex; justify-content: flex-end; margin-top: 12px; }
+    .btn-apply { background: #4b89ff; color: #fff; border: none; padding: 8px 16px; border-radius: 6px; font-size: 14px; cursor: pointer; }
+    .btn-apply:disabled { background: #ccc; }
+
+    /* 找活页面 */
+    .find-header { background: #fff; padding: 12px 16px; border-bottom: 1px solid var(--border-color); }
+    .search-btn-row { display: flex; background: #f5f6f8; border-radius: 6px; overflow: hidden; margin-bottom: 12px; }
+    .search-btn-row input { flex: 1; padding: 10px; font-size: 14px; }
+    .search-btn-row button { background: var(--brand-color); color: #fff; border: none; padding: 0 20px; font-size: 14px; }
+    .filter-row { display: flex; justify-content: space-between; font-size: 14px; color: var(--text-2); }
+    .filter-item { display: flex; align-items: center; gap: 4px; }
+
+    /* 工单页面 */
+    .order-header { background: var(--brand-color); padding: 12px 16px 20px; color: #fff; }
+    .order-top { display: flex; justify-content: center; align-items: center; margin-bottom: 16px; font-size: 18px; }
+    .empty-state { text-align: center; padding: 100px 0; color: var(--text-3); font-size: 15px; }
+
+    /* 我的页面 */
+    .mine-header { background: var(--brand-color); padding: 30px 20px 60px; color: #fff; border-radius: 0 0 20px 20px; }
+    .user-profile { display: flex; align-items: center; justify-content: space-between; }
+    .user-left { display: flex; align-items: center; gap: 12px; }
+    .avatar-box { width: 64px; height: 64px; background: #fff; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 30px; }
+    .user-info h3 { font-size: 20px; font-weight: 500; margin-bottom: 4px; }
+    .user-info p { font-size: 13px; opacity: 0.9; }
+    .btn-recruit { background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.4); color: #fff; padding: 6px 12px; border-radius: 16px; font-size: 12px; }
+
+    .apply-card { background: linear-gradient(135deg, #3b7cff, #2b65f7); margin: -30px 16px 16px; padding: 16px; border-radius: 16px; color: #fff; box-shadow: 0 4px 12px rgba(43,101,247,0.2); }
+    .apply-title { font-size: 16px; font-weight: bold; margin-bottom: 12px; }
+    .apply-row { display: flex; gap: 12px; }
+    .apply-item { flex: 1; background: #fff; border-radius: 12px; padding: 16px; display: flex; align-items: center; gap: 10px; color: var(--text-1); cursor: pointer; }
+    .apply-icon { font-size: 24px; }
+    .apply-text { font-size: 15px; font-weight: bold; }
+
+    /* 九宫格 */
+    .grid-menu { background: #fff; margin: 0 16px 20px; border-radius: 16px; padding: 20px 10px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+    .grid-item { text-align: center; cursor: pointer; }
+    .grid-icon-wrap { width: 48px; height: 48px; border-radius: 50%; margin: 0 auto 8px auto; display: flex; justify-content: center; align-items: center; font-size: 24px; color: #fff; }
+    .grid-text { font-size: 13px; color: var(--text-1); }
+
+    .logout-wrap { padding: 0 16px 30px; }
+    .btn-logout { width: 100%; padding: 14px; background: #fff; color: var(--danger); border: none; border-radius: 12px; font-size: 16px; font-weight: bold; }
+
+    /* 登录页 */
+    .login-page-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: #fff; z-index: 9999; padding: 20px; display: none; flex-direction: column; }
+    .login-top-bar { display: flex; align-items: center; height: 44px; margin-bottom: 40px; }
+    .back-btn { font-size: 24px; cursor: pointer; width: 40px; }
+    .login-top-title { flex: 1; text-align: center; font-size: 17px; font-weight: 500; margin-right: 40px; }
+    .login-logo-area { text-align: center; margin-bottom: 60px; }
+    .logo-circle { width: 100px; height: 100px; background: linear-gradient(135deg, #4b89ff, #34d399); border-radius: 50%; margin: 0 auto 20px; display: flex; flex-direction: column; justify-content: center; align-items: center; color: #fff; font-weight: bold; line-height: 1.2; }
+    .logo-circle .top { font-size: 24px; }
+    .logo-circle .bottom { font-size: 12px; }
+    .login-title { font-size: 24px; font-weight: 600; margin-bottom: 8px; }
+    .login-btns { display: flex; flex-direction: column; gap: 20px; padding: 0 20px; }
+    .btn-login-user { background: var(--brand-color); color: #fff; border: none; border-radius: 30px; padding: 16px; font-size: 18px; }
+    .btn-login-company { background: #f5f8ff; color: var(--brand-color); border: 1px solid #e8f0fe; border-radius: 30px; padding: 16px; font-size: 18px; }
+    .login-agreement { margin-top: auto; padding-bottom: 30px; display: flex; gap: 8px; font-size: 12px; color: var(--text-2); justify-content: center; }
+
+    /* 内部通用弹窗 */
+    .overlay-page { position: fixed; top: 0; left: 0; right: 0; bottom: 60px; background: var(--bg-base); z-index: 500; overflow-y: auto; display: none; }
+    .overlay-page.active { display: block; }
+    .overlay-header { background: #fff; padding: 12px 16px; display: flex; align-items: center; border-bottom: 1px solid var(--border-color); position: sticky; top: 0; z-index: 10; }
+    .overlay-header .back { font-size: 22px; margin-right: 12px; cursor: pointer; }
+    .overlay-title { font-size: 17px; font-weight: 600; }
+    .overlay-content { padding: 16px; }
+
+    /* 表单样式 */
+    .form-group { background: #fff; border-radius: 12px; padding: 16px; margin-bottom: 16px; }
+    .form-label { font-size: 14px; font-weight: 500; margin-bottom: 8px; display: block; }
+    .form-input { width: 100%; background: #f5f6f8; padding: 12px; border-radius: 8px; font-size: 14px; margin-bottom: 16px; }
+    .btn-submit { width: 100%; padding: 14px; background: var(--brand-color); color: #fff; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; }
+
+    /* 列表项样式 */
+    .list-item-card { background: #fff; padding: 16px; border-radius: 12px; margin-bottom: 10px; border-left: 4px solid var(--brand-color); }
+    .list-item-card.disabled { border-left-color: #ccc; opacity: 0.7; }
+    .list-item-header { display: flex; justify-content: space-between; margin-bottom: 8px; font-weight: bold; font-size: 15px; }
+    .list-item-desc { font-size: 12px; color: var(--text-3); margin-top: 4px; }
+
+    .toast { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.7); color: #fff; padding: 10px 20px; border-radius: 8px; z-index: 10000; font-size: 14px; display: none; }
   </style>
 </head>
 <body>
-  <!-- 登录页 -->
-  <div id="login-page" class="container" style="margin-top: 60px;">
-    <div class="card">
-      <h3 style="text-align: center; border: none; padding: 0;">🔐 登录 / 注册</h3>
-      <p style="text-align: center; color: var(--text-sub); font-size: 12px;">测试模式 - 验证码固定 123456</p>
-      <div class="form-group">
-        <select id="login-role">
-          <option value="user">C端用户</option>
-          <option value="store">B端门店</option>
-          <option value="admin">A端总部</option>
-        </select>
-      </div>
-      <div class="form-group" id="group-phone">
-        <input type="text" id="login-phone" value="13800000001" placeholder="手机号">
-      </div>
-      <div class="form-group hidden" id="group-store">
-        <input type="text" id="login-store" value="store001" placeholder="门店码">
-      </div>
-      <div class="form-group" id="group-code">
-        <input type="text" id="login-code" value="123456" placeholder="验证码">
-      </div>
-      <button onclick="doLogin()" id="btn-login">立即登录</button>
+
+<div id="toast-box" class="toast"></div>
+
+<!-- ================= 首页 Tab ================= -->
+<div id="tab-home" class="tab-page active">
+  <div class="home-header">
+    <div class="home-top">
+      <span>XX零工市场</span>
+      <span style="letter-spacing:2px;">...</span>
     </div>
-  </div>
-
-  <!-- C端页面 -->
-  <div id="user-page" class="hidden">
-    <div class="app-header">
-      <div class="header-title">零工获取积分App</div>
-      <button class="outline" style="width: auto; padding: 6px 12px;" onclick="logout()">退出</button>
-    </div>
-    <div class="container">
-      <div class="stat-grid">
-        <div class="stat-box">
-          <div class="label">💰 可用积分</div>
-          <div class="val" id="user-points" style="color: var(--success);">0</div>
-        </div>
-        <div class="stat-box">
-          <div class="label">🌱 成长值 (等级)</div>
-          <div class="val" id="user-growth">0</div>
-        </div>
-      </div>
-
-      <div class="card">
-        <h3>🎯 每日任务 (点击获取)</h3>
-        <div class="grid" id="task-list"></div>
-      </div>
-
-      <div class="card">
-        <h3>📺 看视频赚积分 (按组结算)</h3>
-        <p style="color:var(--text-sub); font-size:12px; margin-top:-10px; margin-bottom:15px;">每组10个视频全部看完获得5分，每天3组共15分</p>
-        <div id="ad-list"></div>
+    <div class="home-search">
+      <div class="city-select">登封市 <span>▼</span></div>
+      <div class="search-box">
+        <span>🔍</span>
+        <input type="text" placeholder="搜索符合的个人简历">
       </div>
     </div>
   </div>
 
-  <!-- B端页面 -->
-  <div id="store-page" class="hidden">
-    <div class="app-header">
-      <div class="header-title">🏪 门店核销台</div>
-      <button class="outline" style="width: auto; padding: 6px 12px;" onclick="logout()">退出</button>
+  <div class="category-card">
+    <div class="cat-item"><div class="cat-icon-wrap" style="background:#f87171;">💼</div><div class="cat-text">简单好做</div></div>
+    <div class="cat-item"><div class="cat-icon-wrap" style="background:#60a5fa;">🎖️</div><div class="cat-text">专业技能</div></div>
+    <div class="cat-item"><div class="cat-icon-wrap" style="background:#fbbf24;">🛠️</div><div class="cat-text">家装服务</div></div>
+    <div class="cat-item"><div class="cat-icon-wrap" style="background:#34d399;">🏠</div><div class="cat-text">室内工作</div></div>
+  </div>
+
+  <div class="list-tabs">
+    <div class="list-tab active">正在热招</div>
+    <div class="list-tab">零工驿站</div>
+  </div>
+
+  <div class="list-section" style="padding-bottom:20px;">
+    <div class="list-header">
+      <div class="list-title">最新工作信息</div>
+      <div class="list-more" onclick="switchTab(1, document.querySelectorAll('.nav-item')[1])">查看更多 &gt;&gt;</div>
     </div>
-    <div class="container">
-      <div class="card">
-        <h3>📱 用户核销</h3>
-        <div class="form-group">
-          <input type="text" id="verify-phone" value="13800000001" placeholder="会员手机号">
+    <div id="home-job-list"></div>
+  </div>
+</div>
+
+<!-- ================= 找活 Tab ================= -->
+<div id="tab-find" class="tab-page">
+  <div class="find-header">
+    <div class="search-btn-row">
+      <input type="text" placeholder="请输入工作名称或单位名称">
+      <button>搜索</button>
+    </div>
+    <div class="filter-row">
+      <div class="filter-item">综合推荐 <span>▼</span></div>
+      <div class="filter-item">工作地区 <span>▼</span></div>
+      <div class="filter-item">行业类型 <span>▼</span></div>
+    </div>
+  </div>
+  <div class="list-section" style="padding-top:12px; padding-bottom:20px;">
+    <div id="find-job-list"></div>
+  </div>
+</div>
+
+<!-- ================= 工单 Tab ================= -->
+<div id="tab-order" class="tab-page">
+  <div class="order-header">
+    <div class="order-top">我的工单</div>
+  </div>
+  <div class="empty-state">暂无进行中的工单</div>
+</div>
+
+<!-- ================= 我的 Tab ================= -->
+<div id="tab-mine" class="tab-page" style="padding-bottom: 80px;">
+  <div class="mine-header">
+    <div class="user-profile">
+      <div class="user-left" onclick="checkLoginStatus(true)">
+        <div class="avatar-box" id="mine-avatar">👤</div>
+        <div class="user-info">
+          <h3 id="mine-name">你好</h3>
+          <p id="mine-phone">点击此处登录</p>
         </div>
-        <div class="flex-between" style="gap: 10px; margin-bottom: 15px;">
-          <input type="number" id="verify-points" value="10" placeholder="扣减积分">
-          <button class="outline" onclick="queryUser()" style="width: 120px;">查询用户</button>
-        </div>
-        <div id="query-result" style="margin-bottom: 15px; font-size: 14px; color: var(--text-sub);"></div>
-        <button class="danger" onclick="doVerify()">⚡ 确认核销</button>
+      </div>
+      <div class="btn-recruit" id="top-action-btn" onclick="handleTopAction()">👤 我要招工</div>
+    </div>
+  </div>
+
+  <div class="apply-card">
+    <div class="apply-title" id="card-title">我的申请单</div>
+    <div class="apply-row">
+      <div class="apply-item" id="card-item-1" onclick="handleCardAction(1)">
+        <div class="apply-icon">🛡️</div>
+        <div><div class="apply-text" id="card-item-1-text">邀请我的</div></div>
+      </div>
+      <div class="apply-item" id="card-item-2" onclick="handleCardAction(2)">
+        <div class="apply-icon">✉️</div>
+        <div><div class="apply-text" id="card-item-2-text">我的投递</div></div>
       </div>
     </div>
   </div>
 
-  <!-- A端总部页面 (新增) -->
-  <div id="admin-page" class="hidden">
-    <div class="app-header">
-      <div class="header-title">🏢 总部测试后台</div>
-      <button class="outline" style="width: auto; padding: 6px 12px;" onclick="logout()">退出</button>
+  <!-- 1. 求职者菜单 -->
+  <div class="grid-menu" id="menu-user" style="display: none;">
+    <div class="grid-item" onclick="handleTaskClick()">
+      <div class="grid-icon-wrap" style="background:#60a5fa;">🎯</div>
+      <div class="grid-text">日常签到</div>
     </div>
-    <div class="container">
-      <div class="card">
-        <div class="flex-between">
-          <h3 style="border:none; padding:0; margin:0;">📊 数据看板</h3>
-          <button class="outline small" onclick="loadAdminDashboard()">刷新</button>
-        </div>
-        <div class="grid" id="admin-dashboard" style="margin-top:15px;"></div>
-      </div>
-
-      <div class="card">
-        <div class="flex-between">
-          <h3 style="border:none; padding:0; margin:0;">👥 用户列表 & 管理</h3>
-          <button class="outline small" onclick="loadAdminUsers()">刷新</button>
-        </div>
-        <div style="overflow-x:auto;">
-          <table>
-            <thead>
-              <tr>
-                <th>ID</th>
-                <th>手机号</th>
-                <th>积分</th>
-                <th>成长值</th>
-                <th>操作</th>
-              </tr>
-            </thead>
-            <tbody id="admin-user-list"></tbody>
-          </table>
-        </div>
-      </div>
-
-      <div class="card">
-        <h3 style="color: var(--danger); border-left-color: var(--danger);">⚠️ 危险操作区</h3>
-        <p style="font-size:12px; color:var(--text-sub);">清空所有流水/分桶/核销/广告/任务/兑换记录，保留3个测试用户。</p>
-        <button class="danger" onclick="doReset()">一键重置所有测试数据</button>
-      </div>
+    <div class="grid-item" onclick="handleExchangeClick()">
+      <div class="grid-icon-wrap" style="background:#fbbf24;">¥</div>
+      <div class="grid-text">工单管理</div>
+    </div>
+    <div class="grid-item" onclick="handleReferralClick()">
+      <div class="grid-icon-wrap" style="background:#a78bfa;">🤝</div>
+      <div class="grid-text">零工人脉</div>
+    </div>
+    <div class="grid-item" onclick="showToast('简历维护开发中')">
+      <div class="grid-icon-wrap" style="background:#34d399;">📝</div>
+      <div class="grid-text">简历维护</div>
     </div>
   </div>
 
-  <!-- 日志区域 -->
-  <div class="container">
-    <div class="card">
-      <div class="flex-between">
-        <h3 style="border: none; padding: 0; margin: 0;">📋 运行日志</h3>
-        <button class="outline small" onclick="document.getElementById('log').innerHTML=''">清空</button>
-      </div>
-      <div class="log-box" id="log">等待操作...</div>
+  <!-- 2. 招聘方菜单 -->
+  <div class="grid-menu" id="menu-company" style="display: none;">
+    <div class="grid-item" onclick="showToast('信息维护开发中')">
+      <div class="grid-icon-wrap" style="background:#60a5fa;">⚙️</div>
+      <div class="grid-text">信息维护</div>
+    </div>
+    <div class="grid-item" onclick="showToast('岗位管理开发中')">
+      <div class="grid-icon-wrap" style="background:#fbbf24;">📋</div>
+      <div class="grid-text">岗位管理</div>
+    </div>
+    <div class="grid-item" onclick="showToast('面试邀请开发中')">
+      <div class="grid-icon-wrap" style="background:#34d399;">💌</div>
+      <div class="grid-text">面试邀请</div>
+    </div>
+    <div class="grid-item" onclick="showToast('零工评价开发中')">
+      <div class="grid-icon-wrap" style="background:#f87171;">⭐</div>
+      <div class="grid-text">零工评价</div>
     </div>
   </div>
 
-  <script>
-    const state = { token: '', role: '' };
+  <!-- 3. 经纪人菜单 -->
+  <div class="grid-menu" id="menu-agent" style="display: none;">
+    <div class="grid-item" onclick="showToast('推荐人才开发中')">
+      <div class="grid-icon-wrap" style="background:#a78bfa;">💼</div>
+      <div class="grid-text">推荐人才</div>
+    </div>
+    <div class="grid-item" onclick="handleReferralClick()">
+      <div class="grid-icon-wrap" style="background:#34d399;">🌐</div>
+      <div class="grid-text">我的团队</div>
+    </div>
+    <div class="grid-item" onclick="showToast('返佣明细开发中')">
+      <div class="grid-icon-wrap" style="background:#60a5fa;">💰</div>
+      <div class="grid-text">返佣明细</div>
+    </div>
+  </div>
 
-    document.getElementById('login-role').addEventListener('change', (e) => {
-      const role = e.target.value;
-      document.getElementById('group-phone').classList.toggle('hidden', role !== 'user');
-      document.getElementById('group-store').classList.toggle('hidden', role !== 'store');
-      document.getElementById('group-code').classList.toggle('hidden', role === 'admin');
-      if(role === 'admin') {
-        document.getElementById('login-phone').value = 'admin';
+  <!-- 4. 运营与监管菜单 -->
+  <div class="grid-menu" id="menu-admin" style="display: none;">
+    <div class="grid-item" onclick="showOverlay('overlay-admin')">
+      <div class="grid-icon-wrap" style="background:#f87171;">📊</div>
+      <div class="grid-text">数据大盘</div>
+    </div>
+    <div class="grid-item" onclick="showToast('岗位审核开发中')">
+      <div class="grid-icon-wrap" style="background:#60a5fa;">🛡️</div>
+      <div class="grid-text">内容审核</div>
+    </div>
+    <div class="grid-item" onclick="showToast('监管风控开发中')">
+      <div class="grid-icon-wrap" style="background:#fbbf24;">⚖️</div>
+      <div class="grid-text">监管风控</div>
+    </div>
+  </div>
+
+  <div class="logout-wrap">
+    <button class="btn-logout" onclick="logout()">退出登录</button>
+  </div>
+</div>
+
+<!-- ================= 底部导航栏 ================= -->
+<div class="bottom-nav">
+  <div class="nav-item active" onclick="switchTab(0, this)">
+    <div class="nav-icon">🏠</div><div>首页</div>
+  </div>
+  <div class="nav-item" onclick="switchTab(1, this)">
+    <div class="nav-icon">🔍</div><div>找活</div>
+  </div>
+  <div class="nav-item-publish" onclick="showOverlay('overlay-publish')">
+    <div class="publish-btn">+</div>
+    <div class="publish-text">发布招工</div>
+  </div>
+  <div class="nav-item" onclick="switchTab(3, this)">
+    <div class="nav-icon">📋</div><div>工单</div>
+  </div>
+  <div class="nav-item" onclick="switchTab(4, this)">
+    <div class="nav-icon">👤</div><div>个人中心</div>
+  </div>
+</div>
+
+<!-- ================= 登录页 ================= -->
+<div id="login-page" class="login-page-overlay">
+  <div class="login-top-bar">
+    <div class="back-btn" onclick="closeLoginPage()">&lt;</div>
+    <div class="login-top-title">登录身份</div>
+  </div>
+  <div class="login-logo-area">
+    <div class="logo-circle"><div class="top">XX</div><div class="bottom">零工</div></div>
+    <div class="login-title">XX零工市场</div>
+  </div>
+
+  <div class="login-btns">
+    <button class="btn-login-user" onclick="doLogin('user')">求职者登录</button>
+    <button class="btn-login-company" onclick="doLogin('company')" style="margin-top: 12px;">招聘方登录</button>
+  </div>
+
+  <div style="margin-top: 50px; text-align: center; font-size: 13px; color: var(--text-3);">
+    <span style="cursor: pointer;" onclick="doLogin('agent')">经纪人</span>
+    <span style="margin: 0 12px;">|</span>
+    <span style="cursor: pointer;" onclick="doLogin('admin')">运营</span>
+    <span style="margin: 0 12px;">|</span>
+    <span style="cursor: pointer;" onclick="doLogin('super')">监管</span>
+  </div>
+
+  <div class="login-agreement" style="margin-top: auto; padding-bottom: 30px;">
+    <input type="checkbox" id="agree-chk" checked>
+    <div>我已经阅读并同意《<a href="#">用户服务协议</a>》《<a href="#">隐私政策</a>》</div>
+  </div>
+</div>
+
+<!-- ================= 覆盖层弹窗 ================= -->
+<!-- 发布招工弹窗 -->
+<div id="overlay-publish" class="overlay-page">
+  <div class="overlay-header">
+    <div class="back" onclick="closeOverlay('overlay-publish')">&lt;</div>
+    <div class="overlay-title">发布招工信息</div>
+  </div>
+  <div class="overlay-content">
+    <div class="form-group">
+      <label class="form-label">岗位名称</label>
+      <input type="text" id="pub-title" class="form-input" placeholder="例：发传单/服务员">
+      <label class="form-label">薪资待遇</label>
+      <input type="text" id="pub-salary" class="form-input" placeholder="例：150元/天">
+      <label class="form-label">工作地点</label>
+      <input type="text" id="pub-location" class="form-input" placeholder="例：管城区二七广场">
+      <label class="form-label">标签 (逗号分隔)</label>
+      <input type="text" id="pub-tags" class="form-input" placeholder="例：日结,包餐,轻松">
+      <label class="form-label">详细描述 (选填)</label>
+      <textarea id="pub-desc" class="form-input" rows="3" placeholder="补充工作内容..."></textarea>
+      <button class="btn-submit" onclick="submitJob()">确认发布</button>
+    </div>
+  </div>
+</div>
+
+<!-- 我的投递记录/收到简历弹窗 -->
+<div id="overlay-my-apply" class="overlay-page">
+  <div class="overlay-header">
+    <div class="back" onclick="closeOverlay('overlay-my-apply')">&lt;</div>
+    <div class="overlay-title" id="overlay-apply-title">我的投递</div>
+  </div>
+  <div class="overlay-content" id="my-apply-list"></div>
+</div>
+
+<!-- 日常签到弹窗 (原每日任务) -->
+<div id="overlay-tasks" class="overlay-page">
+  <div class="overlay-header"><div class="back" onclick="closeOverlay('overlay-tasks')">&lt;</div><div class="overlay-title">日常签到与任务</div></div>
+  <div class="overlay-content">
+    <div style="background: linear-gradient(135deg, #f6d365 0%, #fda085 100%); padding:20px; border-radius:12px; color:#fff; margin-bottom:16px; display:flex; justify-content:space-between;">
+      <div><div style="font-size:13px;">可用积分</div><div style="font-size:28px; font-weight:bold;" id="ui-points">0</div></div>
+      <div><div style="font-size:13px;">成长值</div><div style="font-size:28px; font-weight:bold;" id="ui-growth">0</div></div>
+    </div>
+    <div style="background:#fff; border-radius:12px; padding:16px; margin-bottom:16px;">
+      <div style="font-weight:bold; margin-bottom:12px;">🎯 活跃任务</div>
+      <div class="grid-menu" id="task-list" style="grid-template-columns: repeat(3,1fr); padding:0; margin:0; box-shadow:none;"></div>
+    </div>
+    <div style="background:#fff; border-radius:12px; padding:16px;">
+      <div style="font-weight:bold; margin-bottom:12px;">📺 看视频赚积分</div>
+      <div id="ad-list"></div>
+    </div>
+  </div>
+</div>
+
+<!-- 工单管理弹窗 (原积分明细) -->
+<div id="overlay-exchange" class="overlay-page">
+  <div class="overlay-header"><div class="back" onclick="closeOverlay('overlay-exchange')">&lt;</div><div class="overlay-title">工单管理</div></div>
+  <div class="overlay-content"><div id="exchange-list" style="color:#666; font-size:14px; text-align:center; padding:20px 0;">加载中...</div></div>
+</div>
+
+<!-- 零工人脉弹窗 (原打工人脉) -->
+<div id="overlay-referral" class="overlay-page">
+  <div class="overlay-header"><div class="back" onclick="closeOverlay('overlay-referral')">&lt;</div><div class="overlay-title">零工人脉</div></div>
+  <div class="overlay-content"><div id="referral-list" style="color:#666; font-size:14px; text-align:center; padding:20px 0;">加载中...</div></div>
+</div>
+
+<!-- 平台管理后台 -->
+<div id="overlay-admin" class="overlay-page">
+  <div class="overlay-header"><div class="back" onclick="closeOverlay('overlay-admin')">&lt;</div><div class="overlay-title">平台管理</div></div>
+  <div class="overlay-content">
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:16px;">
+      <div style="background:#fff; border-radius:12px; padding:16px; text-align:center;"><div style="font-size:12px; color:#888;">用户总数</div><div style="font-size:24px; font-weight:bold; margin-top:4px;" id="dash-users">0</div></div>
+      <div style="background:#fff; border-radius:12px; padding:16px; text-align:center;"><div style="font-size:12px; color:#888;">总发放积分</div><div style="font-size:24px; font-weight:bold; color:var(--success); margin-top:4px;" id="dash-points">0</div></div>
+    </div>
+    <div style="background:#fff; border-radius:12px; padding:16px;">
+      <div style="display:flex; justify-content:space-between; margin-bottom:12px;"><div style="font-weight:bold;">用户列表</div><button onclick="loadAdminUsers()" style="background:#eee; border:none; padding:4px 8px; border-radius:4px; font-size:12px;">刷新</button></div>
+      <div id="admin-user-list"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ================= 全局状态与基础工具 =================
+  const state = { token: localStorage.getItem('app_token') || '', role: localStorage.getItem('app_role') || '', user: JSON.parse(localStorage.getItem('app_user') || 'null') };
+
+  function showToast(msg) {
+    const box = document.getElementById('toast-box');
+    box.innerText = msg;
+    box.style.display = 'block';
+    setTimeout(() => { box.style.display = 'none'; }, 2000);
+  }
+
+  async function api(path, method = 'GET', body = null) {
+    const headers = { 'Content-Type': 'application/json' };
+    if (state.token) headers['Authorization'] = 'Bearer ' + state.token;
+    try {
+      const res = await fetch(path, { method, headers, body: body ? JSON.stringify(body) : null });
+      const data = await res.json();
+      if (data.code !== 0) throw new Error(data.message || '请求失败');
+      return data.data;
+    } catch (err) {
+      showToast(err.message);
+      throw err;
+    }
+  }
+
+  // ================= 导航路由与登录 =================
+  function switchTab(index, el) {
+    document.querySelectorAll('.tab-page').forEach(page => page.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+
+    if (index === 0) document.getElementById('tab-home').classList.add('active');
+    if (index === 1) document.getElementById('tab-find').classList.add('active');
+    if (index === 3) document.getElementById('tab-order').classList.add('active');
+    if (index === 4) {
+      document.getElementById('tab-mine').classList.add('active');
+      checkLoginStatus();
+    }
+    if (el) el.classList.add('active');
+  }
+
+  function checkLoginStatus(triggerLogin = false) {
+    if (state.token && state.user) {
+      document.getElementById('mine-name').innerText = state.user.nickname || '用户';
+      document.getElementById('mine-phone').innerText = '手机号：' + (state.user.phone || '未知');
+      document.getElementById('mine-avatar').innerText = (state.user.nickname || 'U').charAt(0).toUpperCase();
+    } else {
+      document.getElementById('mine-name').innerText = '你好';
+      document.getElementById('mine-phone').innerText = '点击此处登录';
+      document.getElementById('mine-avatar').innerText = '👤';
+      if (triggerLogin) document.getElementById('login-page').style.display = 'flex';
+    }
+  }
+
+  function closeLoginPage() { document.getElementById('login-page').style.display = 'none'; }
+
+  async function doLogin(type) {
+    const isAgree = document.getElementById('agree-chk').checked;
+    if (!isAgree) return showToast('请先同意服务协议');
+
+    let body = { role: 'user', code: '123456', phone: '13800000001' };
+    if (type === 'company') body = { role: 'store', code: '123456', storeCode: 'store001' };
+    if (type === 'agent') body = { role: 'user', code: '123456', phone: '13800000002' };
+    if (type === 'admin' || type === 'super') body = { role: 'admin', code: '123456', phone: 'admin' };
+
+    try {
+      const data = await api('/api/auth/login', 'POST', body);
+      state.token = data.token;
+      state.role = data.role;
+      state.user = data.user || data.store || { nickname: '管理员' };
+
+      localStorage.setItem('app_token', state.token);
+      localStorage.setItem('app_role', state.role);
+      localStorage.setItem('app_user', JSON.stringify(state.user));
+
+      showToast('登录成功');
+      closeLoginPage();
+      checkLoginStatus();
+
+      // 根据登录的 type 切换专属九宫格 & 动态文字
+      document.getElementById('menu-user').style.display = 'none';
+      document.getElementById('menu-company').style.display = 'none';
+      document.getElementById('menu-agent').style.display = 'none';
+      document.getElementById('menu-admin').style.display = 'none';
+
+      const topBtn = document.getElementById('top-action-btn');
+      const cardTitle = document.getElementById('card-title');
+      const item1 = document.getElementById('card-item-1-text');
+      const item2 = document.getElementById('card-item-2-text');
+      const overlayApplyTitle = document.getElementById('overlay-apply-title');
+
+      if (type === 'user') {
+        document.getElementById('menu-user').style.display = 'grid';
+        topBtn.innerHTML = '👤 我要招工';
+        cardTitle.innerText = '我的申请单';
+        item1.innerText = '邀请我的';
+        item2.innerText = '我的投递';
+        overlayApplyTitle.innerText = '我的投递';
+      } else if (type === 'company') {
+        document.getElementById('menu-company').style.display = 'grid';
+        topBtn.innerHTML = '🏢 我的备案';
+        cardTitle.innerText = '用工服务';
+        item1.innerText = '发布职位';
+        item2.innerText = '收到简历';
+        overlayApplyTitle.innerText = '收到简历';
+      } else if (type === 'agent') {
+        document.getElementById('menu-agent').style.display = 'grid';
+        topBtn.innerHTML = '💼 我的团队';
+        cardTitle.innerText = '业务概览';
+      } else if (type === 'admin' || type === 'super') {
+        document.getElementById('menu-admin').style.display = 'grid';
+        topBtn.innerHTML = '⚙️ 系统设置';
+        cardTitle.innerText = '平台概览';
+      }
+
+      loadJobs();
+    } catch (e) {}
+  }
+
+  function logout() {
+    state.token = ''; state.role = ''; state.user = null;
+    localStorage.clear();
+    checkLoginStatus();
+    showToast('已退出登录');
+  }
+
+  // ================= 顶部卡片点击逻辑 =================
+  function handleTopAction() {
+    if (!state.token) return document.getElementById('login-page').style.display = 'flex';
+    if (state.role === 'store') showToast('我的备案功能开发中');
+    else if (state.role === 'user') showOverlay('overlay-publish');
+  }
+
+  function handleCardAction(index) {
+    if (!state.token) return document.getElementById('login-page').style.display = 'flex';
+
+    if (state.role === 'store') {
+      if (index === 1) showOverlay('overlay-publish');
+      if (index === 2) showToast('收到简历列表开发中');
+    } else {
+      if (index === 1) showToast('邀请我的功能开发中');
+      if (index === 2) showOverlay('overlay-my-apply');
+    }
+  }
+
+  // ================= 弹层控制 =================
+  function showOverlay(id) {
+    if (!state.token && !id.includes('publish')) {
+      return document.getElementById('login-page').style.display = 'flex';
+    }
+    document.getElementById(id).classList.add('active');
+
+    if (id === 'overlay-tasks') { loadUserStats(); loadTasks(); loadAds(); }
+    if (id === 'overlay-exchange') { loadExchangeRecords(); }
+    if (id === 'overlay-referral') { loadReferralDownlines(); }
+    if (id === 'overlay-my-apply') { loadMyApplications(); }
+    if (id === 'overlay-admin') { loadAdminDashboard(); loadAdminUsers(); }
+  }
+  function closeOverlay(id) { document.getElementById(id).classList.remove('active'); }
+
+  // ================= 招工业务核心逻辑 =================
+  async function loadJobs() {
+    try {
+      const data = await api('/api/jobs/list');
+      let html = '';
+      if (!data || data.length === 0) {
+        html = '<div style="text-align:center; padding:40px; color:#999;">暂无招工信息，快去发布第一条吧！</div>';
       } else {
-        document.getElementById('login-phone').value = '13800000001';
-      }
-    });
-
-    function log(msg, isError = false) {
-      const box = document.getElementById('log');
-      const color = isError ? 'var(--danger)' : '#00ff00';
-      const time = new Date().toLocaleTimeString();
-      box.innerHTML = `<div style="color:${color}">[${time}] ${msg}</div>` + box.innerHTML;
-    }
-
-    async function api(path, method = 'GET', body = null) {
-      const headers = { 'Content-Type': 'application/json' };
-      if (state.token) headers['Authorization'] = 'Bearer ' + state.token;
-      try {
-        const res = await fetch(path, { method, headers, body: body ? JSON.stringify(body) : null });
-        const data = await res.json();
-        if (data.code !== 0) throw new Error(data.message || '请求失败');
-        return data.data;
-      } catch (err) {
-        log(`请求失败: ${err.message}`, true);
-        throw err;
-      }
-    }
-
-    async function doLogin() {
-      const role = document.getElementById('login-role').value;
-      const body = { role, code: document.getElementById('login-code').value };
-      if (role === 'user') body.phone = document.getElementById('login-phone').value;
-      if (role === 'store') body.storeCode = document.getElementById('login-store').value;
-      if (role === 'admin') { body.phone = 'admin'; body.code = '123456'; }
-
-      const btn = document.getElementById('btn-login');
-      btn.disabled = true; btn.innerText = '登录中...';
-
-      try {
-        const data = await api('/api/auth/login', 'POST', body);
-        state.token = data.token;
-        state.role = data.role;
-        log('登录成功');
-
-        document.getElementById('login-page').classList.add('hidden');
-        if (data.role === 'user') {
-          document.getElementById('user-page').classList.remove('hidden');
-          loadUserStats(); loadTasks(); loadAds();
-        } else if (data.role === 'store') {
-          document.getElementById('store-page').classList.remove('hidden');
-        } else if (data.role === 'admin') {
-          document.getElementById('admin-page').classList.remove('hidden');
-          loadAdminDashboard(); loadAdminUsers();
-        }
-      } catch (e) {
-      } finally {
-        btn.disabled = false; btn.innerText = '立即登录';
-      }
-    }
-
-    function logout() {
-      state.token = ''; state.role = '';
-      document.getElementById('user-page').classList.add('hidden');
-      document.getElementById('store-page').classList.add('hidden');
-      document.getElementById('admin-page').classList.add('hidden');
-      document.getElementById('login-page').classList.remove('hidden');
-    }
-
-    // --- C端逻辑 ---
-    async function loadUserStats() {
-      try {
-        const data = await api('/api/user/points');
-        document.getElementById('user-points').innerText = data.available_points;
-        document.getElementById('user-growth').innerText = data.growth_value;
-      } catch (e) {}
-    }
-
-    async function loadTasks() {
-      try {
-        const data = await api('/api/tasks/today');
-        const map = { signin:'签到', moments:'朋友圈', appDownload:'App下载', yifenGou:'1分购', study:'线上学习', studyOffline:'线下学习', parttime:'兼职' };
-        const pts = { signin:1, moments:3, appDownload:25, yifenGou:3, study:5, studyOffline:20, parttime:3 };
-
-        let html = '';
-        for (const k in data) {
-          if(k === '_raw') continue;
-          const isDone = data[k] > 0;
+        data.forEach(job => {
+          const tagsHtml = job.tags.map(t => `<span>${t}</span>`).join('');
           html += `
-            <div class="task-item ${isDone ? 'disabled' : ''}" onclick="doTask('${k}')">
-              <div style="font-weight:bold;">${map[k] || k} ${isDone?'(已完)':''}</div>
-              <div class="points">+${pts[k] || 0}</div>
-            </div>`;
-        }
-        document.getElementById('task-list').innerHTML = html;
-      } catch (e) {}
-    }
-
-    async function doTask(code) {
-      try {
-        await api('/api/tasks/' + code, 'POST');
-        log(`完成任务: ${code}`);
-        loadUserStats(); loadTasks();
-      } catch (e) {}
-    }
-
-    async function loadAds() {
-      try {
-        const data = await api('/api/ads/status');
-        let html = '';
-        data.groups.forEach(g => {
-          const percent = (g.current / 10) * 100;
-          const color = g.settled ? 'var(--text-sub)' : 'var(--primary)';
-          html += `
-            <div style="border:1px solid var(--border); padding:15px; border-radius:8px; margin-bottom:10px;">
-              <div class="flex-between" style="margin-bottom:8px;">
-                <b style="color:${color}">第 ${g.id} 组</b>
-                <span style="font-size:12px; color:var(--text-sub)">${g.current} / 10 ${g.settled ? '(已结算 +5分)' : ''}</span>
+            <div class="job-card">
+              <div class="job-title-row">
+                <div class="job-title">${job.title}</div>
+                <div class="job-salary">${job.salary}</div>
               </div>
-              <div class="progress-bar">
-                <div class="progress-inner" style="width: ${percent}%; background: ${g.settled ? 'var(--text-sub)' : 'var(--success)'}"></div>
+              <div class="job-tags">${tagsHtml}</div>
+              <div class="job-info">
+                <p>📍 <span>工作地点：</span>${job.location}</p>
+                <p>🕒 <span>发布时间：</span>${job.created_at}</p>
               </div>
-              <button style="margin-top:10px;" class="${g.settled ? 'outline' : ''}" ${g.settled ? 'disabled' : ''} onclick="watchAd(${g.id})">
-                ${g.settled ? '已结算' : '模拟看完1个视频'}
-              </button>
-            </div>`;
-        });
-        document.getElementById('ad-list').innerHTML = html;
-      } catch (e) {}
-    }
-
-    async function watchAd(groupId) {
-      try {
-        const transId = 'WEB-' + Date.now() + '-' + Math.random().toString(36).slice(2,8);
-        const res = await api('/api/ads/pre-reward', 'POST', { adGroupId: groupId, transId });
-        if (res.credited) {
-          log(`🎉 第${groupId}组完成，结算 +5 积分！`);
-          loadUserStats();
-        } else {
-          log(`视频观看记录已提交 (${res.current}/10)`);
-        }
-        loadAds();
-      } catch (e) {}
-    }
-
-    // --- B端逻辑 ---
-    async function queryUser() {
-      const phone = document.getElementById('verify-phone').value;
-      try {
-        const data = await api('/api/verify/query', 'POST', { phone });
-        document.getElementById('query-result').innerHTML = `
-          <div style="color:var(--primary); font-weight:bold; margin-bottom:5px;">✅ 查询成功</div>
-          <div>用户: ${data.nickname} (${data.phone})</div>
-          <div>可用积分: <span style="color:var(--danger); font-weight:bold;">${data.available_points}</span></div>
-        `;
-        log(`查询用户成功，当前积分 ${data.available_points}`);
-      } catch (e) {
-        document.getElementById('query-result').innerHTML = '<span style="color:var(--danger)">❌ 未找到该用户</span>';
-      }
-    }
-
-    async function doVerify() {
-      const phone = document.getElementById('verify-phone').value;
-      const points = parseInt(document.getElementById('verify-points').value);
-      if (!points) return alert('请输入核销积分');
-
-      try {
-        const data = await api('/api/verify/confirm', 'POST', { phone, totalPoints: points, verifyCode: '123' });
-        log(`核销成功！扣除了 ${points} 分，剩余 ${data.remaining_points} 分`);
-        document.getElementById('query-result').innerHTML = '<span style="color:var(--success); font-weight:bold;">✅ 核销成功！</span>';
-      } catch (e) {}
-    }
-
-    // --- A端逻辑 ---
-    async function loadAdminDashboard() {
-      try {
-        const data = await api('/api/admin/dashboard');
-        document.getElementById('admin-dashboard').innerHTML = `
-          <div class="stat-box"><div class="label">用户总数</div><div class="val">${data.total_users || 0}</div></div>
-          <div class="stat-box"><div class="label">总发放积分</div><div class="val" style="color:var(--success)">${data.total_points || 0}</div></div>
-          <div class="stat-box"><div class="label">今日发放任务</div><div class="val">${data.total_task_today || 0}</div></div>
-          <div class="stat-box"><div class="label">今日核销积分</div><div class="val" style="color:var(--danger)">${data.total_verify_today_points || 0}</div></div>
-        `;
-      } catch (e) {}
-    }
-
-    async function loadAdminUsers() {
-      try {
-        const data = await api('/api/admin/users');
-        let html = '';
-        data.forEach(u => {
-          html += `
-            <tr>
-              <td>${u.id}</td>
-              <td>${u.phone}</td>
-              <td style="color:var(--success); font-weight:bold;">${u.available_points}</td>
-              <td>${u.growth_value}</td>
-              <td>
-                <button class="outline small" onclick="addPoints(${u.id})">+100分</button>
-              </td>
-            </tr>
+              <div class="job-footer" style="display:flex; justify-content:space-between; align-items:center;">
+                <span style="font-size:12px; color:#999;">发布者：${job.publisher}</span>
+                <button class="btn-apply" onclick="applyJob(${job.id}, this)">在线投递</button>
+              </div>
+            </div>
           `;
         });
-        document.getElementById('admin-user-list').innerHTML = html;
-      } catch (e) {}
-    }
+      }
+      document.getElementById('home-job-list').innerHTML = html;
+      document.getElementById('find-job-list').innerHTML = html;
+    } catch (e) {}
+  }
 
-    async function addPoints(uid) {
-      try {
-        await api('/api/admin/add-points', 'POST', { userId: uid, points: 100, remark: '后台手动加100' });
-        log(`已为 ID ${uid} 的用户加 100 分`);
-        loadAdminDashboard(); loadAdminUsers();
-      } catch (e) {}
+  async function applyJob(jobId, btnEl) {
+    if (!state.token) return document.getElementById('login-page').style.display = 'flex';
+    try {
+      btnEl.disabled = true;
+      btnEl.innerText = '投递中...';
+      await api('/api/jobs/apply', 'POST', { jobId });
+      showToast('投递成功，等待老板联系！');
+      btnEl.innerText = '已投递';
+    } catch (e) {
+      btnEl.disabled = false;
+      btnEl.innerText = '在线投递';
     }
+  }
 
-    async function doReset() {
-      if (!confirm('确定要清空所有测试数据吗？此操作不可恢复！')) return;
-      try {
-        const res = await api('/api/admin/reset', 'POST');
-        log(res.message || '重置成功');
-        loadAdminDashboard(); loadAdminUsers();
-      } catch (e) {}
+  async function submitJob() {
+    const title = document.getElementById('pub-title').value;
+    const salary = document.getElementById('pub-salary').value;
+    const location = document.getElementById('pub-location').value;
+    const tags = document.getElementById('pub-tags').value;
+    const desc = document.getElementById('pub-desc').value;
+
+    if (!title || !salary || !location) return showToast('请填写必填项');
+
+    try {
+      await api('/api/jobs/create', 'POST', { title, salary, location, tags, description: desc });
+      showToast('发布成功');
+      closeOverlay('overlay-publish');
+      document.getElementById('pub-title').value = '';
+      document.getElementById('pub-salary').value = '';
+      document.getElementById('pub-location').value = '';
+      document.getElementById('pub-tags').value = '';
+      document.getElementById('pub-desc').value = '';
+      loadJobs();
+    } catch (e) {}
+  }
+
+  async function loadMyApplications() {
+    const listEl = document.getElementById('my-apply-list');
+    listEl.innerHTML = '加载中...';
+    try {
+      const data = await api('/api/jobs/my-applications');
+      if (!data || data.length === 0) {
+        listEl.innerHTML = '<div style="text-align:center; padding:40px; color:#999;">你还没有投递过工作哦~</div>';
+        return;
+      }
+      let html = '';
+      data.forEach(item => {
+        const isPending = item.status === '待处理';
+        html += `
+          <div class="list-item-card ${isPending ? '' : 'disabled'}">
+            <div class="list-item-header">
+              <span>${item.title}</span>
+              <span style="color:var(--brand-color);">${item.salary}</span>
+            </div>
+            <div style="font-size:13px; color:#666;">地点：${item.location}</div>
+            <div class="list-item-desc" style="display:flex; justify-content:space-between; margin-top:8px;">
+              <span>投递时间：${item.created_at}</span>
+              <span style="color:${isPending ? '#faad14' : 'var(--success)'};">状态：${item.status}</span>
+            </div>
+          </div>
+        `;
+      });
+      listEl.innerHTML = html;
+    } catch (e) {
+      listEl.innerHTML = '<div style="text-align:center; color:red;">加载失败</div>';
     }
-  </script>
+  }
+
+  // ================= 原有业务 (积分/任务/人脉/后台) =================
+  function handleTaskClick() { showOverlay('overlay-tasks'); }
+  function handleExchangeClick() { showOverlay('overlay-exchange'); }
+  function handleReferralClick() { showOverlay('overlay-referral'); }
+
+  async function loadUserStats() {
+    try {
+      const data = await api('/api/user/points');
+      document.getElementById('ui-points').innerText = data.available_points;
+      document.getElementById('ui-growth').innerText = data.growth_value;
+    } catch (e) {}
+  }
+  async function loadTasks() {
+    try {
+      const data = await api('/api/tasks/today');
+      const map = { signin:'签到', moments:'朋友圈', appDownload:'下载', yifenGou:'1分购', study:'线上学习', studyOffline:'线下学习', parttime:'兼职' };
+      const pts = { signin:1, moments:3, appDownload:25, yifenGou:3, study:5, studyOffline:20, parttime:3 };
+      let html = '';
+      for (const k in data) {
+        if(k === '_raw') continue;
+        const isDone = data[k] > 0;
+        html += `<div class="grid-item" onclick="${isDone?'':'doTask(\''+k+'\')'}" style="opacity:${isDone?'0.5':'1'}">
+            <div style="font-size:13px; font-weight:bold; margin-bottom:4px;">${map[k] || k}</div>
+            <div style="color:var(--danger); font-size:12px; font-weight:bold;">+${pts[k] || 0}</div>
+          </div>`;
+      }
+      document.getElementById('task-list').innerHTML = html;
+    } catch (e) {}
+  }
+  async function doTask(code) {
+    try { await api('/api/tasks/' + code, 'POST'); showToast('任务完成'); loadUserStats(); loadTasks(); } catch (e) {}
+  }
+  async function loadAds() {
+    try {
+      const data = await api('/api/ads/status');
+      let html = '';
+      data.groups.forEach(g => {
+        const percent = (g.current / 10) * 100;
+        html += `<div style="margin-bottom: 16px;">
+            <div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 6px;">
+              <span>第 ${g.id} 组</span><span>${g.current} / 10 ${g.settled ? '(已完成)' : ''}</span>
+            </div>
+            <div style="height:6px; background:#eee; border-radius:3px; overflow:hidden; margin-bottom:8px;">
+              <div style="height:100%; width:${percent}%; background:${g.settled?'#52c41a':'#2b65f7'};"></div>
+            </div>
+            <button style="width:100%; padding:8px; border:none; border-radius:6px; background:${g.settled?'#eee':'#2b65f7'}; color:${g.settled?'#999':'#fff'};" ${g.settled ? 'disabled' : ''} onclick="watchAd(${g.id})">
+              ${g.settled ? '已发放' : '模拟看完1个'}
+            </button>
+          </div>`;
+      });
+      document.getElementById('ad-list').innerHTML = html;
+    } catch (e) {}
+  }
+  async function watchAd(groupId) {
+    try {
+      const transId = 'WEB-' + Date.now() + '-' + Math.random().toString(36).slice(2,8);
+      await api('/api/ads/pre-reward', 'POST', { adGroupId: groupId, transId });
+      loadUserStats(); loadAds();
+    } catch (e) {}
+  }
+  async function loadExchangeRecords() {
+    const listEl = document.getElementById('exchange-list');
+    try {
+      const data = await api('/api/user/flow?limit=20');
+      if (!data || data.length === 0) { listEl.innerHTML = '暂无记录'; return; }
+      let html = '';
+      data.forEach(item => {
+        const isEarn = item.points > 0;
+        html += `<div style="display:flex; justify-content:space-between; padding:12px 0; border-bottom:1px solid #f5f5f5;">
+            <div><div style="font-weight:500;">${item.remark || '任务奖励'}</div><div style="font-size:12px; color:#999;">${item.created_at}</div></div>
+            <div style="font-weight:bold; color:${isEarn ? 'var(--success)' : 'var(--danger)'};">${isEarn ? '+' : ''}${item.points}</div>
+          </div>`;
+      });
+      listEl.innerHTML = html;
+    } catch (e) { listEl.innerHTML = '加载失败'; }
+  }
+  async function loadReferralDownlines() {
+    const listEl = document.getElementById('referral-list');
+    try {
+      const data = await api('/api/referral/my-downlines');
+      if (!data || data.length === 0) { listEl.innerHTML = '暂无下线'; return; }
+      let html = '';
+      data.forEach(item => {
+        const isSettled = item.settled === 1;
+        html += `<div style="display:flex; justify-content:space-between; padding:12px 0; border-bottom:1px solid #f5f5f5;">
+            <div><div style="font-weight:500;">${item.user_phone.replace(/(\d{3})\d{4}(\d{4})/, '$1****$2')}</div><div style="font-size:12px; color:#999;">${item.created_at}</div></div>
+            <div style="font-size:12px; padding:4px 8px; border-radius:4px; background:${isSettled ? '#f6ffed' : '#fffbe6'}; color:${isSettled ? 'var(--success)' : '#faad14'}; border:1px solid ${isSettled ? '#b7eb8f' : '#ffe58f'};">${isSettled ? '已生效' : '待生效'}</div>
+          </div>`;
+      });
+      listEl.innerHTML = html;
+    } catch (e) { listEl.innerHTML = '加载失败'; }
+  }
+  async function loadAdminDashboard() {
+    try {
+      const data = await api('/api/admin/dashboard');
+      document.getElementById('dash-users').innerText = data.total_users || 0;
+      document.getElementById('dash-points').innerText = data.total_points || 0;
+    } catch (e) {}
+  }
+  async function loadAdminUsers() {
+    try {
+      const data = await api('/api/admin/users');
+      let html = '';
+      data.forEach(u => {
+        html += `<div style="display:flex; justify-content:space-between; padding:12px 0; border-bottom:1px solid #eee;">
+          <div>${u.phone}</div>
+          <div style="color:#52c41a; font-weight:bold;">${u.available_points}分</div>
+          <button style="border:1px solid #2b65f7; color:#2b65f7; background:none; padding:2px 8px; border-radius:4px;" onclick="addPoints(${u.id})">+100分</button>
+        </div>`;
+      });
+      document.getElementById('admin-user-list').innerHTML = html;
+    } catch (e) {}
+  }
+  async function addPoints(uid) {
+    try {
+      await api('/api/admin/add-points', 'POST', { userId: uid, points: 100, remark: '后台加分' });
+      showToast('加分成功');
+      loadAdminDashboard(); loadAdminUsers();
+    } catch (e) {}
+  }
+
+  // 初始化加载数据
+  window.onload = () => {
+    checkLoginStatus();
+    loadJobs();
+  };
+</script>
 </body>
 </html>

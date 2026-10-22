@@ -227,7 +227,6 @@ class TaskLog(Base):
         Index("ix_tasklog_user_date", "user_id", "log_date"),
     )
 
-
 # ---------- 管理员 ----------
 class AdminUser(Base):
     __tablename__ = "admin_users"
@@ -236,4 +235,30 @@ class AdminUser(Base):
     username = Column(String(64), unique=True, nullable=False)
     password_hash = Column(String(255), nullable=False)
     role = Column(String(32), nullable=False, default="admin")
+    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+
+
+# ---------- 招工信息表 (注意这里不要缩进！) ----------
+class Job(Base):
+    __tablename__ = "jobs"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    publisher_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    title = Column(String(100), nullable=False)
+    salary = Column(String(50), nullable=False)
+    location = Column(String(255), nullable=False)
+    tags = Column(String(255), nullable=False)  # 逗号分隔，如 "日结,包餐"
+    description = Column(Text, nullable=True)
+    status = Column(Integer, nullable=False, default=1)  # 1=开放, 0=关闭
+    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+
+
+# ---------- 投递记录表 (不要缩进) ----------
+class JobApplication(Base):
+    __tablename__ = "job_applications"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    job_id = Column(Integer, ForeignKey("jobs.id"), nullable=False, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    status = Column(Integer, nullable=False, default=1)  # 1=待处理, 2=已录用, 3=已拒绝
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)

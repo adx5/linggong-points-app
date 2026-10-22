@@ -29,7 +29,7 @@ from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 from database import init_models
-from routers import admin, ads, auth, exchange, referral, tasks, user, verify
+from routers import admin, ads, auth, exchange, referral, tasks, user, verify, jobs # 加了 jobs
 
 BASE_DIR = Path(__file__).resolve().parent
 STATIC_DIR = BASE_DIR / "static"
@@ -78,6 +78,7 @@ app.include_router(verify.router)
 app.include_router(exchange.router)
 app.include_router(referral.router)
 app.include_router(admin.router)
+app.include_router(jobs.router)
 
 
 @app.get("/api/health")
