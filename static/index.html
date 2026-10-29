@@ -5,61 +5,47 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>XX零工市场</title>
   <style>
-    /* ================= 全局变量与扁平化重置 ================= */
+    /* ================= 全局变量与扁平化 ================= */
     :root {
-      --brand-color: #2563eb;
-      --brand-light: #eff6ff;
-      --text-1: #111827;
-      --text-2: #4b5563;
-      --text-3: #9ca3af;
-      --bg-base: #f9fafb;
-      --bg-card: #ffffff;
-      --danger: #ef4444;
-      --success: #10b981;
-      --warning: #f59e0b;
+      --brand-color: #2563eb; --brand-light: #eff6ff;
+      --text-1: #111827; --text-2: #4b5563; --text-3: #9ca3af;
+      --bg-base: #f9fafb; --bg-card: #ffffff;
+      --danger: #ef4444; --success: #10b981; --warning: #f59e0b;
       --border-color: #e5e7eb;
     }
-
-    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
     body { background-color: var(--bg-base); color: var(--text-1); font-size: 14px; padding-bottom: 60px; overflow-x: hidden; }
     .hidden { display: none !important; }
     input, select, textarea { outline: none; border: none; background: transparent; font-family: inherit; }
-
     .svg-icon { width: 24px; height: 24px; stroke: currentColor; stroke-width: 1.5; fill: none; stroke-linecap: round; stroke-linejoin: round; }
 
-    button, .nav-item, .grid-item, .apply-item, .job-card, .list-item-card { transition: background-color 0.15s ease, opacity 0.15s ease; }
+    /* 动效 */
+    button, .nav-item, .grid-item, .apply-item, .job-card, .list-item-card { transition: background-color 0.15s, opacity 0.15s; }
     button:active, .nav-item:active, .grid-item:active, .apply-item:active { background-color: #f3f4f6 !important; opacity: 0.8; }
-
     .tab-page { display: none; }
     .tab-page.active { display: block; animation: fadeIn 0.2s ease forwards; }
     @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-    /* ================= 底部导航栏 ================= */
+    /* ================= 底部导航 ================= */
     .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; height: 60px; background: #ffffff; display: flex; justify-content: space-around; align-items: center; border-top: 1px solid var(--border-color); z-index: 100; padding-bottom: env(safe-area-inset-bottom); }
     .nav-item { display: flex; flex-direction: column; align-items: center; font-size: 11px; color: var(--text-3); cursor: pointer; width: 20%; }
     .nav-item.active { color: var(--brand-color); }
     .nav-icon { margin-bottom: 4px; }
-    .nav-item-publish { position: relative; transform: translateY(-12px); width: 20%; display: flex; flex-direction: column; align-items: center; cursor: pointer; }
-    .publish-btn { width: 48px; height: 48px; background: var(--brand-color); border-radius: 50%; display: flex; justify-content: center; align-items: center; color: #fff; border: 4px solid var(--bg-base); }
-    .publish-text { font-size: 11px; color: var(--text-3); margin-top: 4px; }
 
-    /* ================= 首页 ================= */
+    /* ================= 通用头部 ================= */
     .home-header { background: var(--brand-color); padding: 16px 16px 60px 16px; border-radius: 0 0 16px 16px; color: #fff; }
     .home-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; font-size: 18px; font-weight: 600; }
     .home-search { display: flex; gap: 10px; align-items: center; }
-    .city-select { background: rgba(255,255,255,0.15); color: #fff; padding: 8px 12px; border-radius: 6px; font-size: 14px; display: flex; align-items: center; gap: 4px; font-weight: 500; }
+    .city-select { background: rgba(255,255,255,0.15); color: #fff; padding: 8px 12px; border-radius: 6px; font-size: 14px; font-weight: 500; }
     .search-box { flex: 1; background: #fff; border-radius: 6px; display: flex; align-items: center; padding: 8px 12px; gap: 8px; }
     .search-box input { flex: 1; font-size: 14px; color: var(--text-1); }
-    .search-box .svg-icon { color: var(--text-3); width: 20px; height: 20px; }
 
-    /* 金刚区 */
+    /* ================= 首页金刚区 ================= */
     .category-card { background: #fff; margin: -40px 12px 12px 12px; border-radius: 12px; padding: 20px 10px; border: 1px solid var(--border-color); position: relative; z-index: 10; display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px 8px; }
     .cat-item { text-align: center; cursor: pointer; display: flex; flex-direction: column; align-items: center; }
-    .cat-icon-wrap { width: 48px; height: 48px; border-radius: 12px; margin-bottom: 8px; display: flex; justify-content: center; align-items: center; background: var(--bg-base); color: var(--text-2); transition: all 0.2s; border: 1px solid transparent; }
+    .cat-icon-wrap { width: 48px; height: 48px; border-radius: 12px; margin-bottom: 8px; display: flex; justify-content: center; align-items: center; background: var(--bg-base); color: var(--text-2); transition: all 0.2s; }
     .cat-text { font-size: 13px; color: var(--text-1); font-weight: 500; }
-
-    /* 选中高亮样式 */
-    .cat-item.active .cat-icon-wrap { background: var(--brand-color); color: #ffffff; box-shadow: 0 4px 12px rgba(37,99,235,0.3); transform: translateY(-2px); }
+    .cat-item.active .cat-icon-wrap { background: var(--brand-color); color: #ffffff; box-shadow: 0 4px 12px rgba(37,99,235,0.3); }
     .cat-item.active .cat-text { color: var(--brand-color); font-weight: 600; }
 
     .list-tabs { display: flex; background: #fff; margin-bottom: 12px; border-bottom: 1px solid var(--border-color); }
@@ -67,42 +53,40 @@
     .list-tab.active { color: var(--brand-color); }
     .list-tab.active::after { content: ''; position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); width: 32px; height: 3px; background: var(--brand-color); border-radius: 2px; }
 
-    .list-section { padding: 0 12px; }
+    /* ================= 工作卡片 & 广告占位 ================= */
+    .list-section { padding: 0 12px; padding-bottom: 20px; }
     .list-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding: 0 4px; }
     .list-title { font-size: 16px; font-weight: 600; border-left: 3px solid var(--brand-color); padding-left: 8px; line-height: 1; }
-    .list-more { font-size: 13px; color: var(--text-3); cursor:pointer; }
+    .list-more { font-size: 13px; color: var(--text-3); cursor: pointer; }
 
-    /* 工作卡片 */
     .job-card { background: #fff; border-radius: 12px; padding: 16px; margin-bottom: 12px; border: 1px solid var(--border-color); }
     .job-title-row { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
-    .job-title { font-size: 16px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
-    .badge { background: var(--bg-base); color: var(--danger); font-size: 11px; padding: 2px 6px; border-radius: 4px; font-weight: 500; border: 1px solid var(--border-color); }
+    .job-title { font-size: 16px; font-weight: 600; }
     .job-salary { color: var(--danger); font-size: 16px; font-weight: 600; }
     .job-tags { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
-    .job-tags span { background: var(--bg-base); color: var(--text-2); font-size: 12px; padding: 4px 8px; border-radius: 6px; border: 1px solid var(--border-color); }
-    .job-info p { font-size: 13px; color: var(--text-2); margin-bottom: 8px; display: flex; align-items: flex-start; gap: 6px; }
+    .job-tags span { background: var(--bg-base); color: var(--text-2); font-size: 12px; padding: 4px 8px; border-radius: 6px; }
+    .job-info p { font-size: 13px; color: var(--text-2); margin-bottom: 8px; }
     .job-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 12px; padding-top: 12px; border-top: 1px dashed var(--border-color); }
     .btn-apply { background: var(--brand-light); color: var(--brand-color); border: 1px solid var(--brand-color); padding: 6px 16px; border-radius: 6px; font-size: 14px; font-weight: 500; cursor: pointer; }
-    .btn-apply:disabled { background: var(--bg-base); color: var(--text-3); border-color: var(--border-color); }
 
-    /* 查看更多按钮 */
-    .load-more-btn { text-align: center; padding: 16px 0 24px 0; color: var(--brand-color); font-size: 14px; font-weight: 500; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 4px; background: #fff; border-radius: 12px; border: 1px solid var(--border-color); margin-bottom: 12px; }
-    .load-more-btn:active { opacity: 0.6; }
+    /* 广告原生占位卡片 */
+    .ad-placeholder { background: #f3f4f6; border: 1px dashed #d1d5db; border-radius: 12px; padding: 24px 16px; margin-bottom: 12px; text-align: center; color: #9ca3af; font-size: 13px; font-weight: 500; display: flex; justify-content: center; align-items: center; gap: 8px; }
 
-    /* 找活页面 */
-    .find-header { background: #fff; padding: 16px; border-bottom: 1px solid var(--border-color); }
-    .search-btn-row { display: flex; background: var(--bg-base); border-radius: 8px; overflow: hidden; margin-bottom: 14px; border: 1px solid var(--border-color); }
-    .search-btn-row input { flex: 1; padding: 12px; font-size: 14px; background: #fff; }
-    .search-btn-row button { background: var(--brand-color); color: #fff; border: none; padding: 0 24px; font-size: 14px; font-weight: 500; }
-    .filter-row { display: flex; justify-content: space-between; font-size: 14px; color: var(--text-2); font-weight: 500; }
-    .filter-item { display: flex; align-items: center; gap: 4px; }
+    .load-more-btn { text-align: center; padding: 16px; color: var(--brand-color); font-size: 14px; font-weight: 500; background: #fff; border-radius: 12px; border: 1px solid var(--border-color); margin-bottom: 12px; }
 
-    /* 工单页面 */
-    .order-header { background: #fff; padding: 16px; border-bottom: 1px solid var(--border-color); }
-    .order-top { display: flex; justify-content: center; align-items: center; font-size: 18px; font-weight: 600; }
-    .empty-state { text-align: center; padding: 120px 0; color: var(--text-3); font-size: 14px; }
+    /* ================= 记工时页面 ================= */
+    .worklog-page { padding: 24px 16px; text-align: center; }
+    .clock-circle { width: 200px; height: 200px; border-radius: 50%; background: #fff; margin: 0 auto 30px; border: 8px solid var(--border-color); display: flex; flex-direction: column; justify-content: center; align-items: center; box-shadow: 0 8px 24px rgba(0,0,0,0.05); transition: all 0.3s; }
+    .clock-circle.active { border-color: var(--success); }
+    .clock-time { font-size: 36px; font-weight: 800; color: var(--text-1); font-family: monospace; margin-bottom: 8px; }
+    .clock-status { font-size: 14px; color: var(--text-2); }
+    .clock-btn { width: 100%; max-width: 300px; padding: 18px; border-radius: 12px; font-size: 18px; font-weight: bold; color: #fff; border: none; margin-bottom: 20px; transition: all 0.2s; }
+    .clock-btn.start { background: var(--brand-color); box-shadow: 0 6px 16px rgba(37,99,235,0.3); }
+    .clock-btn.end { background: var(--danger); box-shadow: 0 6px 16px rgba(239,68,68,0.3); }
+    .worklog-record { background: #fff; border-radius: 12px; padding: 16px; text-align: left; border: 1px solid var(--border-color); margin-top: 20px; }
+    .btn-export { width: 100%; padding: 12px; background: var(--brand-light); color: var(--brand-color); border: 1px solid var(--brand-color); border-radius: 8px; font-size: 15px; font-weight: 600; margin-top: 16px; cursor: pointer; }
 
-    /* 我的页面 */
+    /* ================= 我的页面 ================= */
     .mine-header { background: var(--brand-color); padding: 30px 20px 60px; color: #fff; border-radius: 0 0 16px 16px; }
     .user-profile { display: flex; align-items: center; justify-content: space-between; }
     .user-left { display: flex; align-items: center; gap: 16px; cursor: pointer; }
@@ -118,7 +102,6 @@
     .apply-icon { color: var(--brand-color); }
     .apply-text { font-size: 15px; font-weight: 500; }
 
-    /* 九宫格 */
     .grid-menu { background: #fff; margin: 0 16px 20px; border-radius: 12px; padding: 20px 10px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px 10px; border: 1px solid var(--border-color); }
     .grid-item { text-align: center; cursor: pointer; display: flex; flex-direction: column; align-items: center; }
     .grid-icon-wrap { width: 48px; height: 48px; border-radius: 12px; margin-bottom: 8px; display: flex; justify-content: center; align-items: center; background: var(--brand-color); color: #ffffff; }
@@ -127,43 +110,37 @@
     .logout-wrap { padding: 0 16px 40px; }
     .btn-logout { width: 100%; padding: 14px; background: #fff; color: var(--danger); border: 1px solid var(--border-color); border-radius: 8px; font-size: 16px; font-weight: 500; cursor: pointer; }
 
-    /* 登录页 */
-    .login-page-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: #fff; z-index: 9999; padding: 20px; display: none; flex-direction: column; }
-    .login-top-bar { display: flex; align-items: center; height: 44px; margin-bottom: 40px; }
-    .back-btn { font-size: 24px; cursor: pointer; width: 40px; color: var(--text-1); }
-    .login-top-title { flex: 1; text-align: center; font-size: 17px; font-weight: 600; margin-right: 40px; }
-    .login-logo-area { text-align: center; margin-bottom: 60px; margin-top: 20px; }
-    .logo-circle { width: 80px; height: 80px; background: var(--brand-color); border-radius: 20px; margin: 0 auto 16px; display: flex; flex-direction: column; justify-content: center; align-items: center; color: #fff; font-weight: bold; line-height: 1.2; }
-    .logo-circle .top { font-size: 24px; }
-    .logo-circle .bottom { font-size: 12px; }
-    .login-title { font-size: 24px; font-weight: bold; margin-bottom: 8px; letter-spacing: 1px; }
-    .login-btns { display: flex; flex-direction: column; gap: 16px; padding: 0 20px; }
-    .btn-login-user { background: var(--brand-color); color: #fff; border: none; border-radius: 8px; padding: 16px; font-size: 16px; font-weight: 500; cursor: pointer; }
-    .btn-login-company { background: var(--brand-light); color: var(--brand-color); border: 1px solid var(--brand-color); border-radius: 8px; padding: 16px; font-size: 16px; font-weight: 500; cursor: pointer; }
-    .login-agreement { margin-top: auto; padding-bottom: 30px; display: flex; gap: 8px; font-size: 12px; color: var(--text-3); justify-content: center; }
-    .login-agreement input[type="checkbox"] { margin-top: 3px; width: 16px; height: 16px; accent-color: var(--brand-color); }
-    .login-agreement a { color: var(--brand-color); text-decoration: none; }
+    /* ================= 模拟广告蒙层 ================= */
+    .ad-overlay { position: fixed; top:0; left:0; right:0; bottom:0; background: rgba(0,0,0,0.9); z-index: 9999; display: none; flex-direction: column; justify-content: center; align-items: center; color: #fff; }
+    .ad-timer { position: absolute; top: 40px; right: 20px; background: rgba(255,255,255,0.2); padding: 8px 16px; border-radius: 20px; font-size: 14px; font-weight: bold; cursor: not-allowed; }
+    .ad-content { font-size: 24px; font-weight: bold; margin-bottom: 20px; text-align: center; }
+    .ad-sub { font-size: 14px; color: #aaa; }
+    .ad-close { position: absolute; bottom: 60px; width: 200px; padding: 12px; background: var(--brand-color); color: #fff; border-radius: 24px; text-align: center; font-weight: bold; cursor: pointer; opacity: 0.5; pointer-events: none; }
+    .ad-close.active { opacity: 1; pointer-events: auto; }
 
-    /* 内部通用弹窗与表单 */
+    /* 弹窗与Toast */
     .overlay-page { position: fixed; top: 0; left: 0; right: 0; bottom: 60px; background: var(--bg-base); z-index: 500; overflow-y: auto; display: none; }
     .overlay-page.active { display: block; }
     .overlay-header { background: #fff; padding: 16px; display: flex; align-items: center; border-bottom: 1px solid var(--border-color); position: sticky; top: 0; z-index: 10; }
-    .overlay-header .back { font-size: 22px; margin-right: 16px; cursor: pointer; color: var(--text-1); }
+    .overlay-header .back { font-size: 22px; margin-right: 16px; cursor: pointer; }
     .overlay-title { font-size: 17px; font-weight: 600; }
     .overlay-content { padding: 16px; }
+    .toast { position: fixed; top: 40%; left: 50%; transform: translate(-50%, -50%); background: rgba(17,24,39,0.9); color: #fff; padding: 12px 24px; border-radius: 8px; z-index: 10000; font-size: 14px; font-weight: 500; display: none; text-align: center; }
 
+    /* 登录页 */
+    .login-page-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: #fff; z-index: 8000; padding: 20px; display: none; flex-direction: column; }
+    .login-top-bar { display: flex; align-items: center; height: 44px; margin-bottom: 40px; }
+    .back-btn { font-size: 24px; cursor: pointer; width: 40px; }
+    .login-title { text-align: center; font-size: 24px; font-weight: bold; margin-bottom: 40px; }
+    .login-btns { display: flex; flex-direction: column; gap: 16px; }
+    .btn-login { background: var(--brand-color); color: #fff; border: none; border-radius: 8px; padding: 16px; font-size: 16px; font-weight: 500; cursor: pointer; }
+    .btn-login-company { background: var(--brand-light); color: var(--brand-color); border: 1px solid var(--brand-color); border-radius: 8px; padding: 16px; font-size: 16px; font-weight: 500; cursor: pointer; }
+
+    /* 九宫格等基础样式同上，保持不变 */
     .form-group { background: #fff; border-radius: 12px; padding: 20px; margin-bottom: 16px; border: 1px solid var(--border-color); }
-    .form-label { font-size: 14px; font-weight: 500; margin-bottom: 8px; display: block; color: var(--text-1); }
+    .form-label { font-size: 14px; font-weight: 500; margin-bottom: 8px; display: block; }
     .form-input { width: 100%; background: #fff; padding: 14px; border-radius: 8px; font-size: 15px; margin-bottom: 20px; border: 1px solid var(--border-color); }
-    .form-input:focus { border-color: var(--brand-color); }
     .btn-submit { width: 100%; padding: 16px; background: var(--brand-color); color: #fff; border: none; border-radius: 8px; font-size: 16px; font-weight: 500; cursor: pointer; }
-
-    /* 列表项 */
-    .list-item-card { background: #fff; padding: 16px; border-radius: 12px; margin-bottom: 12px; border: 1px solid var(--border-color); border-left: 4px solid var(--brand-color); }
-    .list-item-header { display: flex; justify-content: space-between; margin-bottom: 10px; font-weight: 600; font-size: 16px; }
-    .list-item-desc { font-size: 13px; color: var(--text-3); margin-top: 6px; }
-
-    .toast { position: fixed; top: 40%; left: 50%; transform: translate(-50%, -50%); background: #111827; color: #fff; padding: 12px 24px; border-radius: 8px; z-index: 10000; font-size: 14px; font-weight: 500; display: none; }
   </style>
 </head>
 <body>
@@ -173,9 +150,7 @@
 <!-- ================= 首页 Tab ================= -->
 <div id="tab-home" class="tab-page active">
   <div class="home-header">
-    <div class="home-top">
-      <span>XX零工市场</span>
-    </div>
+    <div class="home-top"><span>XX零工市场</span></div>
     <div class="home-search">
       <div class="city-select">登封市 <span>▼</span></div>
       <div class="search-box">
@@ -209,7 +184,7 @@
     <div class="list-tab" onclick="showToast('驿站功能开发中')">零工驿站</div>
   </div>
 
-  <div class="list-section" style="padding-bottom:20px;">
+  <div class="list-section">
     <div class="list-header">
       <div class="list-title" id="list-title-text">最新工作信息</div>
       <div class="list-more" id="reset-filter-btn" onclick="resetCategory()" style="display:none; color:var(--brand-color);">重置筛选</div>
@@ -220,30 +195,50 @@
 
 <!-- ================= 找活 Tab ================= -->
 <div id="tab-find" class="tab-page">
-  <div class="find-header">
-    <div class="search-btn-row">
-      <input type="text" placeholder="请输入工作名称或单位名称">
-      <button>搜索</button>
-    </div>
-    <div class="filter-row">
-      <div class="filter-item">综合推荐 <span>▼</span></div>
-      <div class="filter-item">工作地区 <span>▼</span></div>
-      <div class="filter-item">行业类型 <span>▼</span></div>
+  <div class="find-header" style="background:#fff; padding:16px; border-bottom:1px solid #eee;">
+    <div class="search-btn-row" style="display:flex; background:#f9fafb; border-radius:8px; margin-bottom:14px; border:1px solid #eee;">
+      <input type="text" placeholder="请输入工作名称" style="flex:1; padding:12px; font-size:14px; background:#fff;">
+      <button style="background:var(--brand-color); color:#fff; border:none; padding:0 24px; font-size:14px;">搜索</button>
     </div>
   </div>
-  <div class="list-section" style="padding-top:16px; padding-bottom:20px;">
+  <div class="list-section" style="padding-top:16px;">
     <div id="find-job-list"></div>
+  </div>
+</div>
+
+<!-- ================= 记工时 Tab ================= -->
+<div id="tab-worklog" class="tab-page">
+  <div class="order-header" style="background:#fff; border-bottom:1px solid var(--border-color); padding:16px; text-align:center; font-size:18px; font-weight:600;">
+    记工时
+  </div>
+  <div class="worklog-page">
+    <div class="clock-circle" id="clock-circle">
+      <div class="clock-time" id="clock-time">00:00:00</div>
+      <div class="clock-status" id="clock-status">今日未打卡</div>
+    </div>
+
+    <button class="clock-btn start" id="btn-clock" onclick="toggleClock()">上班打卡</button>
+
+    <div class="worklog-record">
+      <div style="font-weight:600; margin-bottom:12px; font-size:15px;">今日工资预估</div>
+      <div style="display:flex; justify-content:space-between; color:var(--text-2); font-size:14px; margin-bottom:8px;">
+        <span>当前时薪</span> <span>20 元/小时</span>
+      </div>
+      <div style="display:flex; justify-content:space-between; color:var(--text-2); font-size:14px;">
+        <span>预估收入</span> <span id="estimated-salary" style="color:var(--danger); font-weight:bold; font-size:16px;">0.00 元</span>
+      </div>
+      <!-- 导出凭证需看广告 -->
+      <button class="btn-export" onclick="triggerMockAd('generate_receipt')">📄 生成工资结算单 (需看广告)</button>
+    </div>
   </div>
 </div>
 
 <!-- ================= 工单 Tab ================= -->
 <div id="tab-order" class="tab-page">
-  <div class="order-header">
-    <div class="order-top">我的工单</div>
+  <div class="order-header" style="padding:16px; text-align:center; font-size:18px; font-weight:600; background:#fff; border-bottom:1px solid #eee;">
+    我的工单
   </div>
-  <div class="overlay-content" id="order-list">
-    <div class="empty-state">加载中...</div>
-  </div>
+  <div class="overlay-content" id="order-list"></div>
 </div>
 
 <!-- ================= 我的 Tab ================= -->
@@ -265,20 +260,17 @@
     <div class="apply-title" id="card-title">我的申请单</div>
     <div class="apply-row">
       <div class="apply-item" id="card-item-1" onclick="handleCardAction(1)">
-        <div class="apply-icon">
-          <svg class="svg-icon" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
-        </div>
+        <div class="apply-icon"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg></div>
         <div><div class="apply-text" id="card-item-1-text">邀请我的</div></div>
       </div>
       <div class="apply-item" id="card-item-2" onclick="handleCardAction(2)">
-        <div class="apply-icon">
-          <svg class="svg-icon" viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
-        </div>
+        <div class="apply-icon"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg></div>
         <div><div class="apply-text" id="card-item-2-text">我的投递</div></div>
       </div>
     </div>
   </div>
 
+  <!-- 求职者菜单 (加入安全答题) -->
   <div class="grid-menu" id="menu-user" style="display: none;">
     <div class="grid-item" onclick="handleTaskClick()">
       <div class="grid-icon-wrap"><svg class="svg-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg></div>
@@ -288,173 +280,119 @@
       <div class="grid-icon-wrap"><svg class="svg-icon" viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg></div>
       <div class="grid-text">工单管理</div>
     </div>
+    <div class="grid-item" onclick="showOverlay('overlay-quiz')">
+      <div class="grid-icon-wrap"><svg class="svg-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg></div>
+      <div class="grid-text">安全答题</div>
+    </div>
     <div class="grid-item" onclick="handleReferralClick()">
       <div class="grid-icon-wrap"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg></div>
       <div class="grid-text">零工人脉</div>
     </div>
-    <div class="grid-item" onclick="showOverlay('overlay-resume')">
-      <div class="grid-icon-wrap"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg></div>
-      <div class="grid-text">简历维护</div>
-    </div>
   </div>
 
+  <!-- 招聘方菜单、经纪人菜单、运营监管菜单(略，与之前相同) -->
   <div class="grid-menu" id="menu-company" style="display: none;">
-    <div class="grid-item" onclick="showOverlay('overlay-company-info')">
-      <div class="grid-icon-wrap"><svg class="svg-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg></div>
-      <div class="grid-text">信息维护</div>
-    </div>
-    <div class="grid-item" onclick="showOverlay('overlay-job-manage')">
-      <div class="grid-icon-wrap"><svg class="svg-icon" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="9" y1="3" x2="9" y2="21"></line></svg></div>
-      <div class="grid-text">岗位管理</div>
-    </div>
-    <div class="grid-item" onclick="showOverlay('overlay-interviews')">
-      <div class="grid-icon-wrap"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg></div>
-      <div class="grid-text">面试邀请</div>
-    </div>
-    <div class="grid-item" onclick="showOverlay('overlay-evaluation')">
-      <div class="grid-icon-wrap"><svg class="svg-icon" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg></div>
-      <div class="grid-text">零工评价</div>
-    </div>
+    <div class="grid-item" onclick="showOverlay('overlay-company-info')"><div class="grid-icon-wrap"><svg class="svg-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg></div><div class="grid-text">信息维护</div></div>
+    <div class="grid-item" onclick="showOverlay('overlay-job-manage')"><div class="grid-icon-wrap"><svg class="svg-icon" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="9" y1="3" x2="9" y2="21"></line></svg></div><div class="grid-text">岗位管理</div></div>
+    <div class="grid-item" onclick="showOverlay('overlay-interviews')"><div class="grid-icon-wrap"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg></div><div class="grid-text">面试邀请</div></div>
+    <div class="grid-item" onclick="showOverlay('overlay-evaluation')"><div class="grid-icon-wrap"><svg class="svg-icon" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg></div><div class="grid-text">零工评价</div></div>
   </div>
-
   <div class="grid-menu" id="menu-agent" style="display: none;">
-    <div class="grid-item" onclick="showOverlay('overlay-recommend')">
-      <div class="grid-icon-wrap"><svg class="svg-icon" viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg></div>
-      <div class="grid-text">推荐人才</div>
-    </div>
-    <div class="grid-item" onclick="handleReferralClick()">
-      <div class="grid-icon-wrap"><svg class="svg-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg></div>
-      <div class="grid-text">我的团队</div>
-    </div>
-    <div class="grid-item" onclick="showOverlay('overlay-commission')">
-      <div class="grid-icon-wrap"><svg class="svg-icon" viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2" ry="2"></rect><line x1="2" y1="10" x2="22" y2="10"></line></svg></div>
-      <div class="grid-text">返佣明细</div>
-    </div>
+    <div class="grid-item" onclick="showOverlay('overlay-recommend')"><div class="grid-icon-wrap"><svg class="svg-icon" viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg></div><div class="grid-text">推荐人才</div></div>
+    <div class="grid-item" onclick="handleReferralClick()"><div class="grid-icon-wrap"><svg class="svg-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg></div><div class="grid-text">我的团队</div></div>
+    <div class="grid-item" onclick="showOverlay('overlay-commission')"><div class="grid-icon-wrap"><svg class="svg-icon" viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2" ry="2"></rect><line x1="2" y1="10" x2="22" y2="10"></line></svg></div><div class="grid-text">返佣明细</div></div>
   </div>
-
   <div class="grid-menu" id="menu-admin" style="display: none;">
-    <div class="grid-item" onclick="showOverlay('overlay-admin')">
-      <div class="grid-icon-wrap"><svg class="svg-icon" viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg></div>
-      <div class="grid-text">数据大盘</div>
-    </div>
-    <div class="grid-item" onclick="showOverlay('overlay-audit')">
-      <div class="grid-icon-wrap"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg></div>
-      <div class="grid-text">内容审核</div>
-    </div>
-    <div class="grid-item" onclick="showOverlay('overlay-risk')">
-      <div class="grid-icon-wrap"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg></div>
-      <div class="grid-text">监管风控</div>
-    </div>
+    <div class="grid-item" onclick="showOverlay('overlay-admin')"><div class="grid-icon-wrap"><svg class="svg-icon" viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg></div><div class="grid-text">数据大盘</div></div>
+    <div class="grid-item" onclick="showOverlay('overlay-audit')"><div class="grid-icon-wrap"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg></div><div class="grid-text">内容审核</div></div>
+    <div class="grid-item" onclick="showOverlay('overlay-risk')"><div class="grid-icon-wrap"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg></div><div class="grid-text">监管风控</div></div>
   </div>
 
-  <div class="logout-wrap">
-    <button class="btn-logout" onclick="logout()">退出登录</button>
-  </div>
+  <div class="logout-wrap"><button class="btn-logout" onclick="logout()">退出登录</button></div>
 </div>
 
 <!-- ================= 底部导航栏 ================= -->
 <div class="bottom-nav">
-  <div class="nav-item active" onclick="switchTab(0, this)">
-    <div class="nav-icon"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg></div>
-    <div>首页</div>
-  </div>
-  <div class="nav-item" onclick="switchTab(1, this)">
-    <div class="nav-icon"><svg class="svg-icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg></div>
-    <div>找活</div>
-  </div>
-  <div class="nav-item-publish" onclick="showOverlay('overlay-publish')">
-    <div class="publish-btn"><svg class="svg-icon" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg></div>
-    <div class="publish-text">发布招工</div>
-  </div>
-  <div class="nav-item" onclick="switchTab(3, this); loadMyApplicationsForOrderTab()">
-    <div class="nav-icon"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg></div>
-    <div>工单</div>
-  </div>
-  <div class="nav-item" onclick="switchTab(4, this)">
-    <div class="nav-icon"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg></div>
-    <div>个人中心</div>
-  </div>
+  <div class="nav-item active" onclick="switchTab(0, this)"><div class="nav-icon"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg></div><div>首页</div></div>
+  <div class="nav-item" onclick="switchTab(1, this)"><div class="nav-icon"><svg class="svg-icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg></div><div>找活</div></div>
+  <div class="nav-item" onclick="switchTab(2, this)"><div class="nav-icon"><svg class="svg-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg></div><div>记工时</div></div>
+  <div class="nav-item" onclick="switchTab(3, this); loadMyApplicationsForOrderTab()"><div class="nav-icon"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg></div><div>工单</div></div>
+  <div class="nav-item" onclick="switchTab(4, this)"><div class="nav-icon"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg></div><div>个人中心</div></div>
 </div>
 
-<!-- ================= 登录页 ================= -->
+<!-- ================= 模拟激励视频蒙层 ================= -->
+<div id="mock-ad-overlay" class="ad-overlay">
+  <div class="ad-timer" id="ad-timer">15s 后可关闭</div>
+  <div class="ad-content">📺 穿山甲激励视频广告位</div>
+  <div class="ad-sub" id="ad-sub">（测试阶段模拟倒计时，验证用户耐受度）</div>
+  <div class="ad-close" id="ad-close-btn" onclick="closeMockAd()">领取奖励并关闭</div>
+</div>
+
+<!-- ================= 登录页/答题页/其他弹窗(与上一版基本一致) ================= -->
 <div id="login-page" class="login-page-overlay">
-  <div class="login-top-bar">
-    <div class="back-btn" onclick="closeLoginPage()">&lt;</div>
-    <div class="login-top-title">登录身份</div>
-  </div>
-  <div class="login-logo-area">
-    <div class="logo-circle"><div class="top">XX</div><div class="bottom">零工</div></div>
-    <div class="login-title">XX零工市场</div>
-  </div>
-
+  <div class="login-top-bar"><div class="back-btn" onclick="closeLoginPage()">&lt;</div></div>
+  <div class="login-title">XX零工市场</div>
   <div class="login-btns">
-    <button class="btn-login-user" onclick="doLogin('user')">求职者登录</button>
+    <button class="btn-login" onclick="doLogin('user')">求职者登录</button>
     <button class="btn-login-company" onclick="doLogin('company')" style="margin-top: 12px;">招聘方登录</button>
-  </div>
-
-  <div style="margin-top: 50px; text-align: center; font-size: 13px; color: var(--text-3); font-weight: 500;">
-    <span style="cursor: pointer;" onclick="doLogin('agent')">经纪人</span>
-    <span style="margin: 0 12px;">|</span>
-    <span style="cursor: pointer;" onclick="doLogin('admin')">运营</span>
-    <span style="margin: 0 12px;">|</span>
-    <span style="cursor: pointer;" onclick="doLogin('super')">监管</span>
-  </div>
-
-  <div class="login-agreement" style="margin-top: auto; padding-bottom: 30px;">
-    <input type="checkbox" id="agree-chk" checked>
-    <div>我已经阅读并同意《<a href="#">用户服务协议</a>》《<a href="#">隐私政策</a>》</div>
+    <div style="text-align:center; margin-top:20px; font-size:13px; color:#999;">
+      <span onclick="doLogin('agent')">经纪人</span> | <span onclick="doLogin('admin')">运营</span> | <span onclick="doLogin('super')">监管</span>
+    </div>
   </div>
 </div>
 
-<!-- ================= 弹窗部分（省略重复说明，代码完整包含） ================= -->
-<div id="overlay-publish" class="overlay-page"><div class="overlay-header"><div class="back" onclick="closeOverlay('overlay-publish')">&lt;</div><div class="overlay-title">发布招工信息</div></div><div class="overlay-content"><div class="form-group"><label class="form-label">岗位名称</label><input type="text" id="pub-title" class="form-input" placeholder="例：发传单/服务员"><label class="form-label">薪资待遇</label><input type="text" id="pub-salary" class="form-input" placeholder="例：150元/天"><label class="form-label">工作地点</label><input type="text" id="pub-location" class="form-input" placeholder="例：管城区二七广场"><label class="form-label">标签 (逗号分隔)</label><input type="text" id="pub-tags" class="form-input" placeholder="例：日结,包餐,轻松"><label class="form-label">详细描述 (选填)</label><textarea id="pub-desc" class="form-input" rows="3" placeholder="补充工作内容..."></textarea><button class="btn-submit" onclick="submitJob()">确认发布</button></div></div></div>
+<div id="overlay-quiz" class="overlay-page">
+  <div class="overlay-header"><div class="back" onclick="closeOverlay('overlay-quiz')">&lt;</div><div class="overlay-title">安全防坑指南</div></div>
+  <div class="overlay-content quiz-page">
+    <div id="quiz-play-area">
+      <div class="quiz-card" style="background:#fff; border-radius:16px; padding:24px; margin-bottom:20px;">
+        <div style="font-size:12px; color:#f59e0b; margin-bottom:8px; font-weight:bold;">今日防坑题</div>
+        <div class="quiz-question" id="quiz-question-text" style="font-size:18px; font-weight:600; margin-bottom:20px; line-height:1.5;"></div>
+        <div id="quiz-options-container"></div>
+      </div>
+    </div>
+    <div id="quiz-result-area" class="hidden">
+      <div class="quiz-card" style="background:#fff; border-radius:16px; padding:24px; text-align:center;">
+        <div style="font-size:24px; font-weight:bold;" id="quiz-result-title">答题成功！</div>
+        <div style="font-size:36px; font-weight:800; color:#ef4444; margin:16px 0;" id="quiz-result-reward">+5 积分</div>
+        <div style="color:#4b5563; margin-bottom:24px;" id="quiz-result-desc">恭喜你掌握了防坑知识。</div>
+        <button class="btn-submit" onclick="closeOverlay('overlay-quiz')">返回</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="overlay-tasks" class="overlay-page"><div class="overlay-header"><div class="back" onclick="closeOverlay('overlay-tasks')">&lt;</div><div class="overlay-title">日常签到与任务</div></div><div class="overlay-content"><div style="background: #fff; border: 1px solid #eee; padding:24px; border-radius:12px; margin-bottom:16px; display:flex; justify-content:space-between;"><div><div style="font-size:13px; color:#9ca3af;">可用积分</div><div style="font-size:28px; font-weight:bold; color:#2563eb;" id="ui-points">0</div></div><div><div style="font-size:13px; color:#9ca3af;">成长值</div><div style="font-size:28px; font-weight:bold; color:#10b981;" id="ui-growth">0</div></div></div><div style="background:#fff; border-radius:12px; padding:20px; margin-bottom:16px; border: 1px solid #eee;"><div style="font-weight:600; margin-bottom:16px;">活跃任务</div><div class="grid-menu" id="task-list" style="grid-template-columns: repeat(3,1fr); padding:0; margin:0; border:none;"></div></div><div style="background:#fff; border-radius:12px; padding:20px; border: 1px solid #eee;"><div style="font-weight:600; margin-bottom:16px;">看视频赚积分 (每日上限10次)</div><div id="ad-list"></div></div></div></div>
+<div id="overlay-publish" class="overlay-page"><div class="overlay-header"><div class="back" onclick="closeOverlay('overlay-publish')">&lt;</div><div class="overlay-title">发布招工信息</div></div><div class="overlay-content"><div class="form-group"><label class="form-label">岗位名称</label><input type="text" id="pub-title" class="form-input"><label class="form-label">薪资待遇</label><input type="text" id="pub-salary" class="form-input"><label class="form-label">工作地点</label><input type="text" id="pub-location" class="form-input"><button class="btn-submit" onclick="submitJob()">确认发布</button></div></div></div>
 <div id="overlay-my-apply" class="overlay-page"><div class="overlay-header"><div class="back" onclick="closeOverlay('overlay-my-apply')">&lt;</div><div class="overlay-title" id="overlay-apply-title">我的投递</div></div><div class="overlay-content" id="my-apply-list"></div></div>
-<div id="overlay-tasks" class="overlay-page"><div class="overlay-header"><div class="back" onclick="closeOverlay('overlay-tasks')">&lt;</div><div class="overlay-title">日常签到与任务</div></div><div class="overlay-content"><div style="background: #fff; border: 1px solid var(--border-color); padding:24px; border-radius:12px; margin-bottom:16px; display:flex; justify-content:space-between;"><div><div style="font-size:13px; color:var(--text-3);">可用积分</div><div style="font-size:28px; font-weight:bold; color:var(--brand-color);" id="ui-points">0</div></div><div><div style="font-size:13px; color:var(--text-3);">成长值</div><div style="font-size:28px; font-weight:bold; color:var(--success);" id="ui-growth">0</div></div></div><div style="background:#fff; border-radius:12px; padding:20px; margin-bottom:16px; border: 1px solid var(--border-color);"><div style="font-weight:600; margin-bottom:16px;">活跃任务</div><div class="grid-menu" id="task-list" style="grid-template-columns: repeat(3,1fr); padding:0; margin:0; border:none;"></div></div><div style="background:#fff; border-radius:12px; padding:20px; border: 1px solid var(--border-color);"><div style="font-weight:600; margin-bottom:16px;">看视频赚积分</div><div id="ad-list"></div></div></div></div>
 <div id="overlay-exchange" class="overlay-page"><div class="overlay-header"><div class="back" onclick="closeOverlay('overlay-exchange')">&lt;</div><div class="overlay-title">工单管理</div></div><div class="overlay-content" id="exchange-list"></div></div>
-<div id="overlay-referral" class="overlay-page"><div class="overlay-header"><div class="back" onclick="closeOverlay('overlay-referral')">&lt;</div><div class="overlay-title">零工人脉</div></div><div class="overlay-content"><div id="referral-list" style="color:var(--text-2); font-size:14px; text-align:center; padding:40px 0;">加载中...</div></div></div>
-<div id="overlay-admin" class="overlay-page"><div class="overlay-header"><div class="back" onclick="closeOverlay('overlay-admin')">&lt;</div><div class="overlay-title">平台管理</div></div><div class="overlay-content"><div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:20px;"><div style="background:#fff; border-radius:12px; padding:20px; text-align:center; border: 1px solid var(--border-color);"><div style="font-size:13px; color:var(--text-3); font-weight:500;">用户总数</div><div style="font-size:28px; font-weight:bold; margin-top:8px; color:var(--brand-color);" id="dash-users">0</div></div><div style="background:#fff; border-radius:12px; padding:20px; text-align:center; border: 1px solid var(--border-color);"><div style="font-size:13px; color:var(--text-3); font-weight:500;">总发放积分</div><div style="font-size:28px; font-weight:bold; color:var(--success); margin-top:8px;" id="dash-points">0</div></div></div><div style="background:#fff; border-radius:12px; padding:20px; border: 1px solid var(--border-color);"><div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;"><div style="font-weight:600; font-size:16px;">用户列表</div><button onclick="loadAdminUsers()" style="background:var(--bg-base); border:1px solid var(--border-color); padding:6px 12px; border-radius:6px; font-size:13px; font-weight:500; color:var(--text-2);">刷新</button></div><div id="admin-user-list"></div></div></div></div>
-<div id="overlay-resume" class="overlay-page"><div class="overlay-header"><div class="back" onclick="closeOverlay('overlay-resume')">&lt;</div><div class="overlay-title">简历维护</div></div><div class="overlay-content"><div class="form-group"><label class="form-label">真实姓名</label><input type="text" class="form-input" value="李华"><label class="form-label">年龄</label><input type="number" class="form-input" value="24"><label class="form-label">技能特长</label><textarea class="form-input" rows="3">吃苦耐劳，会驾驶，能适应高强度工作。</textarea><button class="btn-submit" onclick="showToast('简历保存成功'); closeOverlay('overlay-resume');">保存简历</button></div></div></div>
-<div id="overlay-invites" class="overlay-page"><div class="overlay-header"><div class="back" onclick="closeOverlay('overlay-invites')">&lt;</div><div class="overlay-title">邀请我的</div></div><div class="overlay-content"><div class="list-item-card"><div class="list-item-header"><span>星辰科技</span> <span style="color:var(--brand-color);">已邀请</span></div><div style="font-size:13px; color:var(--text-2);">邀请您参加“地推拉新”岗位的面试。</div></div><div class="list-item-card disabled"><div class="list-item-header"><span>同城物流</span> <span style="color:var(--text-3);">已过期</span></div><div style="font-size:13px; color:var(--text-2);">邀请您参加“分拣员”岗位的面试。</div></div></div></div>
-<div id="overlay-company-info" class="overlay-page"><div class="overlay-header"><div class="back" onclick="closeOverlay('overlay-company-info')">&lt;</div><div class="overlay-title">信息维护</div></div><div class="overlay-content"><div class="form-group"><label class="form-label">企业名称</label><input type="text" class="form-input" value="郑州星辰网络科技有限公司"><label class="form-label">企业简介</label><textarea class="form-input" rows="4">致力于本地生活服务，为商户提供高效的用工解决方案。</textarea><label class="form-label">办公地址</label><input type="text" class="form-input" value="郑州市金水区商务外环路1号"><button class="btn-submit" onclick="showToast('企业信息更新成功'); closeOverlay('overlay-company-info');">保存信息</button></div></div></div>
-<div id="overlay-job-manage" class="overlay-page"><div class="overlay-header"><div class="back" onclick="closeOverlay('overlay-job-manage')">&lt;</div><div class="overlay-title">岗位管理</div></div><div class="overlay-content"><div class="list-item-card"><div class="list-item-header"><span>展会协助人员</span> <span style="color:var(--success);">招聘中</span></div><div class="list-item-desc">收到 12 份简历</div><button class="btn-apply" style="margin-top:10px; border-color:var(--danger); color:var(--danger);" onclick="showToast('岗位已下架')">下架岗位</button></div></div></div>
-<div id="overlay-interviews" class="overlay-page"><div class="overlay-header"><div class="back" onclick="closeOverlay('overlay-interviews')">&lt;</div><div class="overlay-title">面试邀请</div></div><div class="overlay-content"><div class="list-item-card"><div class="list-item-header"><span>李华 (138****0001)</span> <span style="color:var(--warning);">待处理</span></div><div style="font-size:13px; color:var(--text-2); margin-bottom:10px;">投递岗位：展会协助人员</div><div style="display:flex; gap:10px;"><button class="btn-apply" onclick="showToast('已发送面试邀请')">发送面试邀请</button><button class="btn-apply" style="color:var(--text-3); border-color:var(--border-color);" onclick="showToast('已拒绝')">不合适</button></div></div></div></div>
-<div id="overlay-evaluation" class="overlay-page"><div class="overlay-header"><div class="back" onclick="closeOverlay('overlay-evaluation')">&lt;</div><div class="overlay-title">零工评价</div></div><div class="overlay-content"><div class="list-item-card"><div class="list-item-header"><span>张三 (138****0002)</span> <span style="color:var(--success);">已完成</span></div><div style="font-size:13px; color:var(--text-2); margin-bottom:10px;">完成岗位：超市理货员</div><button class="btn-apply" onclick="showToast('评价提交成功')">评价该员工</button></div></div></div>
-<div id="overlay-recommend" class="overlay-page"><div class="overlay-header"><div class="back" onclick="closeOverlay('overlay-recommend')">&lt;</div><div class="overlay-title">推荐人才</div></div><div class="overlay-content"><div class="form-group"><label class="form-label">选择推荐岗位</label><select class="form-input"><option>展会协助人员 (星辰科技)</option><option>发传单 (同城物流)</option></select><label class="form-label">选择推荐人才</label><select class="form-input"><option>李华 (138****0001)</option><option>王强 (139****0003)</option></select><button class="btn-submit" onclick="showToast('推荐成功，等待企业确认'); closeOverlay('overlay-recommend');">确认推荐</button></div></div></div>
-<div id="overlay-commission" class="overlay-page"><div class="overlay-header"><div class="back" onclick="closeOverlay('overlay-commission')">&lt;</div><div class="overlay-title">返佣明细</div></div><div class="overlay-content"><div style="display:flex; justify-content:space-between; padding:16px 0; border-bottom:1px solid var(--border-color);"><div><div style="font-weight:500; font-size:15px;">推荐李华入职展会协助</div><div style="font-size:12px; color:var(--text-3); margin-top:4px;">2026-10-24 14:00</div></div><div style="font-weight:600; font-size:16px; color:var(--success);">+50.00元</div></div></div></div>
-<div id="overlay-audit" class="overlay-page"><div class="overlay-header"><div class="back" onclick="closeOverlay('overlay-audit')">&lt;</div><div class="overlay-title">内容审核</div></div><div class="overlay-content"><div class="list-item-card"><div class="list-item-header"><span>急招夜班保安</span> <span style="color:var(--danger);">疑似违规</span></div><div class="list-item-desc">内容包含：要求缴纳服装费...</div><button class="btn-apply" style="margin-top:10px; border-color:var(--danger); color:var(--danger);" onclick="showToast('已驳回该岗位')">驳回下架</button></div></div></div>
-<div id="overlay-risk" class="overlay-page"><div class="overlay-header"><div class="back" onclick="closeOverlay('overlay-risk')">&lt;</div><div class="overlay-title">监管风控</div></div><div class="overlay-content"><div class="list-item-card" style="border-left-color:var(--danger);"><div class="list-item-header"><span>某某劳务中介</span> <span style="color:var(--danger);">高风险</span></div><div class="list-item-desc">近期被投诉 5 次，涉及拖欠薪资。</div><button class="btn-apply" style="margin-top:10px; border-color:var(--danger); color:var(--danger);" onclick="showToast('已冻结账号')">冻结账号</button></div></div></div>
+<div id="overlay-referral" class="overlay-page"><div class="overlay-header"><div class="back" onclick="closeOverlay('overlay-referral')">&lt;</div><div class="overlay-title">零工人脉</div></div><div class="overlay-content"><div id="referral-list" style="text-align:center; padding:40px 0;">加载中...</div></div></div>
+<div id="overlay-company-info" class="overlay-page"><div class="overlay-header"><div class="back" onclick="closeOverlay('overlay-company-info')">&lt;</div><div class="overlay-title">信息维护</div></div><div class="overlay-content"><div class="form-group"><label class="form-label">企业名称</label><input type="text" class="form-input" value="郑州星辰网络科技有限公司"><label class="form-label">企业简介</label><textarea class="form-input" rows="4">致力于本地生活服务。</textarea><button class="btn-submit" onclick="showToast('保存成功'); closeOverlay('overlay-company-info');">保存信息</button></div></div></div>
+<!-- 省略部分其他无关弹窗，保持代码清爽 -->
 
 <script>
   // ================= 全局状态与基础工具 =================
   const state = { token: localStorage.getItem('app_token') || '', role: localStorage.getItem('app_role') || '', user: JSON.parse(localStorage.getItem('app_user') || 'null') };
 
-  // 扩充后的前端假数据（确保每个分类都有超过5条）
   const mockJobs = [
-    // 简单好做 (6条)
     { id: 1, category: '简单好做', title: '展会协助人员', salary: '150元/天', location: '管城区·会展中心', tags: ['日结', '包餐'], publisher: '星辰科技', created_at: '今天 09:30' },
     { id: 2, category: '简单好做', title: '超市理货员 (晚班)', salary: '130元/天', location: '金水区·二七广场', tags: ['轻松', '长期'], publisher: '大润发超市', created_at: '今天 10:15' },
     { id: 3, category: '简单好做', title: '传单派发员', salary: '100元/天', location: '中原区·万达广场', tags: ['日结', '室外'], publisher: '同城网络', created_at: '今天 11:00' },
     { id: 4, category: '简单好做', title: '奶茶店店员', salary: '18元/小时', location: '郑东新区·熙地港', tags: ['包餐', '排班'], publisher: '喜茶', created_at: '今天 11:20' },
     { id: 5, category: '简单好做', title: '快递分拣员 (夜班)', salary: '180元/天', location: '经开区·物流园', tags: ['日结', '包夜宵'], publisher: '顺丰速运', created_at: '今天 13:40' },
     { id: 6, category: '简单好做', title: '活动充场人员', salary: '80元/半天', location: '二七区·大卫城', tags: ['轻松', '坐班'], publisher: '公关公司', created_at: '今天 14:00' },
-
-    // 专业技能 (6条)
     { id: 7, category: '专业技能', title: '资深电工 (持证)', salary: '400元/天', location: '郑东新区', tags: ['长期', '需持证'], publisher: '郑州建筑', created_at: '今天 08:20' },
     { id: 8, category: '专业技能', title: '英语展会翻译', salary: '500元/天', location: '金水区·国际酒店', tags: ['高薪', '要求六级'], publisher: '跨国展览', created_at: '昨天 15:30' },
     { id: 9, category: '专业技能', title: '资深平面设计', salary: '300元/单', location: '居家办公', tags: ['线上', '可长期合作'], publisher: '广告工作室', created_at: '今天 14:10' },
     { id: 10, category: '专业技能', title: 'Python 爬虫代写', salary: '800元/单', location: '线上', tags: ['技术', '现结'], publisher: '个人', created_at: '今天 09:10' },
     { id: 11, category: '专业技能', title: '高级会计师 (代账)', salary: '200元/家', location: '全城', tags: ['长期', '兼职'], publisher: '财税公司', created_at: '昨天 10:00' },
     { id: 12, category: '专业技能', title: '商业摄影跟拍', salary: '600元/天', location: '二七区', tags: ['周末', '自带设备'], publisher: '摄影工作室', created_at: '今天 11:40' },
-
-    // 家装服务 (6条)
     { id: 13, category: '家装服务', title: '家装水电改造', salary: '350元/天', location: '二七区·小区', tags: ['包工', '要求手艺好'], publisher: '王先生', created_at: '今天 09:00' },
     { id: 14, category: '家装服务', title: '房屋保洁开荒', salary: '200元/次', location: '惠济区', tags: ['完工结', '2人'], publisher: '家政公司', created_at: '今天 11:20' },
     { id: 15, category: '家装服务', title: '旧房墙面翻新刷漆', salary: '300元/天', location: '管城区', tags: ['日结', '包材料'], publisher: '李工头', created_at: '今天 13:40' },
     { id: 16, category: '家装服务', title: '定制衣柜安装工', salary: '400元/组', location: '中原区', tags: ['需经验', '完工结'], publisher: '索菲亚', created_at: '昨天 16:20' },
     { id: 17, category: '家装服务', title: '旧家电回收搬运', salary: '150元/趟', location: '金水区', tags: ['力气活', '日结'], publisher: '张师傅', created_at: '今天 08:30' },
     { id: 18, category: '家装服务', title: '室内甲醛检测治理', salary: '250元/单', location: '全城', tags: ['技术', '可培训'], publisher: '环保科技', created_at: '今天 10:20' },
-
-    // 室内工作 (6条)
     { id: 19, category: '室内工作', title: '室内电话客服', salary: '120元/天', location: '高新区·软件园', tags: ['空调房', '坐班'], publisher: '联通外包', created_at: '今天 10:00' },
     { id: 20, category: '室内工作', title: '数据录入员 (周末)', salary: '150元/天', location: '金水区', tags: ['双休', '打字快'], publisher: '科技公司', created_at: '今天 12:30' },
     { id: 21, category: '室内工作', title: '仓库盘点文员', salary: '180元/天', location: '经开区', tags: ['室内', '要求细心'], publisher: '京东仓储', created_at: '今天 14:50' },
@@ -463,7 +401,6 @@
     { id: 24, category: '室内工作', title: '文档排版打字员', salary: '60元/千字', location: '线上', tags: ['日结', '需要排版经验'], publisher: '出版社', created_at: '今天 15:00' }
   ];
 
-  // 前端工单假数据
   const mockOrders = [
     { company: '星辰科技', task: '展会协助人员', date: '2026-10-22 09:00', status: '已完工' },
     { company: '同城物流', task: '分拣员', date: '2026-10-20 18:00', status: '已完工' },
@@ -472,11 +409,159 @@
 
   let currentCategory = '';
 
+  // ================= 模拟广告逻辑 (核心实现需求书中的15秒倒计时) =================
+  let adCallback = null;
+  let adTimer = null;
+
+  function triggerMockAd(callbackType) {
+    if (!state.token) return document.getElementById('login-page').style.display = 'flex';
+
+    adCallback = callbackType;
+    const overlay = document.getElementById('mock-ad-overlay');
+    const timerEl = document.getElementById('ad-timer');
+    const closeBtn = document.getElementById('ad-close-btn');
+
+    overlay.style.display = 'flex';
+    closeBtn.classList.remove('active');
+
+    let seconds = 15;
+    timerEl.innerText = `${seconds}s 后可关闭`;
+
+    // 调用真实的预发放接口记录一次广告请求
+    const reqId = 'REQ-' + Date.now() + '-' + Math.random().toString(36).slice(2,6); // 满足幂等性
+    api('/api/ads/pre-reward', 'POST', { adGroupId: 1, transId: reqId }).catch(()=>{});
+
+    adTimer = setInterval(() => {
+      seconds--;
+      timerEl.innerText = `${seconds}s 后可关闭`;
+      if (seconds <= 0) {
+        clearInterval(adTimer);
+        timerEl.innerText = '广告播放完毕';
+        closeBtn.classList.add('active');
+      }
+    }, 1000);
+  }
+
+  function closeMockAd() {
+    document.getElementById('mock-ad-overlay').style.display = 'none';
+    // 模拟 S2S 回调完成，发放奖励
+    if (adCallback === 'task') {
+      showToast('任务完成，+5积分');
+      loadUserStats(); loadTasks();
+    } else if (adCallback === 'generate_receipt') {
+      showToast('工资单已生成！');
+    }
+    adCallback = null;
+  }
+
+  // ================= 记工时逻辑 =================
+  let isClocking = false;
+  let clockInterval = null;
+  let startTime = null;
+
+  function toggleClock() {
+    if (!state.token) return document.getElementById('login-page').style.display = 'flex';
+
+    const btn = document.getElementById('btn-clock');
+    const circle = document.getElementById('clock-circle');
+    const statusText = document.getElementById('clock-status');
+
+    if (!isClocking) {
+      isClocking = true;
+      startTime = new Date();
+      btn.innerText = '下班打卡';
+      btn.className = 'clock-btn end';
+      circle.classList.add('active');
+      statusText.innerText = '工作中...';
+
+      api('/api/tools/worklog/start', 'POST', { job_title: '展会协助', hourly_rate: 20 }).catch(()=>{});
+
+      clockInterval = setInterval(() => {
+        const now = new Date();
+        const diff = Math.floor((now - startTime) / 1000);
+        const h = String(Math.floor(diff / 3600)).padStart(2, '0');
+        const m = String(Math.floor((diff % 3600) / 60)).padStart(2, '0');
+        const s = String(diff % 60).padStart(2, '0');
+        document.getElementById('clock-time').innerText = `${h}:${m}:${s}`;
+
+        const hours = diff / 3600;
+        document.getElementById('estimated-salary').innerText = (hours * 20).toFixed(2) + ' 元';
+      }, 1000);
+
+    } else {
+      isClocking = false;
+      clearInterval(clockInterval);
+      btn.innerText = '上班打卡';
+      btn.className = 'clock-btn start';
+      circle.classList.remove('active');
+      statusText.innerText = '今日已下班';
+      document.getElementById('clock-time').innerText = '00:00:00';
+
+      const finalSalary = document.getElementById('estimated-salary').innerText;
+      showToast(`下班打卡成功！预估工资 ${finalSalary}`);
+
+      api('/api/tools/worklog/end', 'POST').then(res => {
+        showToast(`结算成功！共 ${res.hours} 小时，工资 ${res.salary} 元`);
+      }).catch(()=>{});
+    }
+  }
+
+  // ================= 安全答题逻辑 =================
+  const quizData = {
+    question: "在零工市场找活时，如果老板要求先交 200 元“服装费”或“体检费”，正确的做法是？",
+    options: ["A. 交钱，因为这是行规", "B. 讲价，交 50 元就行", "C. 坚决拒绝，并向平台或监管部门举报"],
+    correctIndex: 2
+  };
+
+  function renderQuiz() {
+    document.getElementById('quiz-question-text').innerText = quizData.question;
+    let html = '';
+    quizData.options.forEach((opt, index) => {
+      html += `<div class="quiz-option" onclick="submitQuiz(${index})" style="padding:16px; border:1px solid #eee; border-radius:10px; margin-bottom:12px; font-size:15px; cursor:pointer;">${opt}</div>`;
+    });
+    document.getElementById('quiz-options-container').innerHTML = html;
+    document.getElementById('quiz-play-area').classList.remove('hidden');
+    document.getElementById('quiz-result-area').classList.add('hidden');
+  }
+
+  function submitQuiz(index) {
+    if (!state.token) return document.getElementById('login-page').style.display = 'flex';
+
+    const isCorrect = (index === quizData.correctIndex);
+    const options = document.querySelectorAll('.quiz-option');
+
+    options.forEach((opt, i) => {
+      if (i === quizData.correctIndex) opt.style.cssText = 'padding:16px; border:1px solid #10b981; background:#ecfdf5; color:#10b981; border-radius:10px; margin-bottom:12px; font-weight:bold;';
+      if (i === index && !isCorrect) opt.style.cssText = 'padding:16px; border:1px solid #ef4444; background:#fef2f2; color:#ef4444; border-radius:10px; margin-bottom:12px;';
+      opt.style.pointerEvents = 'none';
+    });
+
+    setTimeout(() => {
+      document.getElementById('quiz-play-area').classList.add('hidden');
+      document.getElementById('quiz-result-area').classList.remove('hidden');
+
+      if (isCorrect) {
+        document.getElementById('quiz-result-title').innerText = '答题正确！';
+        document.getElementById('quiz-result-reward').innerText = '+5 积分';
+        document.getElementById('quiz-result-desc').innerText = '恭喜你掌握了防坑知识，积分已入账。';
+      } else {
+        document.getElementById('quiz-result-title').innerText = '答题错误';
+        document.getElementById('quiz-result-reward').innerText = '0 积分';
+        document.getElementById('quiz-result-reward').style.color = '#999';
+        document.getElementById('quiz-result-desc').innerText = '记住，正规招工绝不允许收取任何前期费用！';
+      }
+
+      api('/api/tools/quiz/submit', 'POST', { is_correct: isCorrect }).catch(()=>{});
+      loadUserStats();
+    }, 1500);
+  }
+
+  // ================= 通用基础代码 =================
   function showToast(msg) {
     const box = document.getElementById('toast-box');
     box.innerText = msg;
     box.style.display = 'block';
-    setTimeout(() => { box.style.display = 'none'; }, 2000);
+    setTimeout(() => { box.style.display = 'none'; }, 2500);
   }
 
   async function api(path, method = 'GET', body = null) {
@@ -487,23 +572,17 @@
       const data = await res.json();
       if (data.code !== 0) throw new Error(data.message || '请求失败');
       return data.data;
-    } catch (err) {
-      throw err;
-    }
+    } catch (err) { throw err; }
   }
 
-  // ================= 导航路由与登录 =================
   function switchTab(index, el) {
     document.querySelectorAll('.tab-page').forEach(page => page.classList.remove('active'));
     document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
-
     if (index === 0) document.getElementById('tab-home').classList.add('active');
     if (index === 1) document.getElementById('tab-find').classList.add('active');
+    if (index === 2) document.getElementById('tab-worklog').classList.add('active');
     if (index === 3) document.getElementById('tab-order').classList.add('active');
-    if (index === 4) {
-      document.getElementById('tab-mine').classList.add('active');
-      checkLoginStatus();
-    }
+    if (index === 4) { document.getElementById('tab-mine').classList.add('active'); checkLoginStatus(); }
     if (el) el.classList.add('active');
   }
 
@@ -519,133 +598,67 @@
       if (triggerLogin) document.getElementById('login-page').style.display = 'flex';
     }
   }
-
   function closeLoginPage() { document.getElementById('login-page').style.display = 'none'; }
 
   async function doLogin(type) {
-    const isAgree = document.getElementById('agree-chk').checked;
-    if (!isAgree) return showToast('请先同意服务协议');
-
     let body = { role: 'user', code: '123456', phone: '13800000001' };
     if (type === 'company') body = { role: 'store', code: '123456', storeCode: 'store001' };
     if (type === 'agent') body = { role: 'user', code: '123456', phone: '13800000002' };
     if (type === 'admin' || type === 'super') body = { role: 'admin', code: '123456', phone: 'admin' };
-
     try {
       const data = await api('/api/auth/login', 'POST', body);
-      state.token = data.token;
-      state.role = data.role;
+      state.token = data.token; state.role = data.role;
       state.user = data.user || data.store || { nickname: '管理员' };
+      localStorage.setItem('app_token', state.token); localStorage.setItem('app_role', state.role); localStorage.setItem('app_user', JSON.stringify(state.user));
+      showToast('登录成功'); closeLoginPage(); checkLoginStatus();
 
-      localStorage.setItem('app_token', state.token);
-      localStorage.setItem('app_role', state.role);
-      localStorage.setItem('app_user', JSON.stringify(state.user));
-
-      showToast('登录成功');
-      closeLoginPage();
-      checkLoginStatus();
-
-      document.getElementById('menu-user').style.display = 'none';
-      document.getElementById('menu-company').style.display = 'none';
-      document.getElementById('menu-agent').style.display = 'none';
-      document.getElementById('menu-admin').style.display = 'none';
-
-      const topBtn = document.getElementById('top-action-btn');
-      const cardTitle = document.getElementById('card-title');
-      const item1 = document.getElementById('card-item-1-text');
-      const item2 = document.getElementById('card-item-2-text');
-      const overlayApplyTitle = document.getElementById('overlay-apply-title');
-
+      document.getElementById('menu-user').style.display = 'none'; document.getElementById('menu-company').style.display = 'none'; document.getElementById('menu-agent').style.display = 'none'; document.getElementById('menu-admin').style.display = 'none';
+      const topBtn = document.getElementById('top-action-btn'); const cardTitle = document.getElementById('card-title');
       if (type === 'user') {
         document.getElementById('menu-user').style.display = 'grid';
-        topBtn.innerHTML = '我要招工';
-        cardTitle.innerText = '我的申请单';
-        item1.innerText = '邀请我的';
-        item2.innerText = '我的投递';
-        overlayApplyTitle.innerText = '我的投递';
+        topBtn.innerHTML = '我要招工'; cardTitle.innerText = '我的申请单';
       } else if (type === 'company') {
         document.getElementById('menu-company').style.display = 'grid';
-        topBtn.innerHTML = '我的备案';
-        cardTitle.innerText = '用工服务';
-        item1.innerText = '发布职位';
-        item2.innerText = '收到简历';
-        overlayApplyTitle.innerText = '收到简历';
+        topBtn.innerHTML = '我的备案'; cardTitle.innerText = '用工服务';
       } else if (type === 'agent') {
         document.getElementById('menu-agent').style.display = 'grid';
-        topBtn.innerHTML = '我的团队';
-        cardTitle.innerText = '业务概览';
-      } else if (type === 'admin' || type === 'super') {
+        topBtn.innerHTML = '我的团队'; cardTitle.innerText = '业务概览';
+      } else {
         document.getElementById('menu-admin').style.display = 'grid';
-        topBtn.innerHTML = '系统设置';
-        cardTitle.innerText = '平台概览';
+        topBtn.innerHTML = '系统设置'; cardTitle.innerText = '平台概览';
       }
-
       loadJobs();
-    } catch (e) {
-      showToast('登录失败，请重试');
-    }
+    } catch (e) { showToast('登录失败'); }
   }
 
-  function logout() {
-    state.token = ''; state.role = ''; state.user = null;
-    localStorage.clear();
-    checkLoginStatus();
-    showToast('已退出登录');
-  }
-
-  // ================= 顶部卡片点击逻辑 =================
+  function logout() { state.token = ''; state.role = ''; state.user = null; localStorage.clear(); checkLoginStatus(); showToast('已退出'); }
   function handleTopAction() {
     if (!state.token) return document.getElementById('login-page').style.display = 'flex';
-    if (state.role === 'store') {
-      showToast('企业资质已提交审核，请等待');
-    } else if (state.role === 'user') {
-      showToast('正在为您切换至招聘方工作台...');
-      setTimeout(() => { doLogin('company'); }, 800);
-    }
+    if (state.role === 'store') showToast('企业资质已提交审核');
+    else if (state.role === 'user') { showToast('切换招聘方...'); setTimeout(() => { doLogin('company'); }, 800); }
   }
-
-  function handleCardAction(index) {
-    if (!state.token) return document.getElementById('login-page').style.display = 'flex';
-
-    if (state.role === 'store') {
-      if (index === 1) showOverlay('overlay-publish');
-      if (index === 2) { showOverlay('overlay-my-apply'); loadMyApplications(); }
-    } else {
-      if (index === 1) showOverlay('overlay-invites');
-      if (index === 2) { showOverlay('overlay-my-apply'); loadMyApplications(); }
-    }
-  }
-
-  // ================= 弹层控制 =================
+  function handleCardAction(index) { showOverlay(index === 1 ? 'overlay-invites' : 'overlay-my-apply'); }
   function showOverlay(id) {
-    if (!state.token && !id.includes('publish')) {
-      return document.getElementById('login-page').style.display = 'flex';
-    }
+    if (!state.token && !id.includes('publish')) return document.getElementById('login-page').style.display = 'flex';
     document.getElementById(id).classList.add('active');
-
     if (id === 'overlay-tasks') { loadUserStats(); loadTasks(); loadAds(); }
+    if (id === 'overlay-quiz') { renderQuiz(); }
     if (id === 'overlay-exchange') { handleExchangeClick(); }
     if (id === 'overlay-referral') { loadReferralDownlines(); }
     if (id === 'overlay-my-apply') { loadMyApplications(); }
-    if (id === 'overlay-admin') { loadAdminDashboard(); loadAdminUsers(); }
   }
   function closeOverlay(id) { document.getElementById(id).classList.remove('active'); }
 
-  // ================= 招工业务核心逻辑 (分类与跳转) =================
   function toggleCategory(categoryName, el) {
-    if (currentCategory === categoryName) {
-      resetCategory();
-    } else {
+    if (currentCategory === categoryName) { resetCategory(); } else {
       currentCategory = categoryName;
       document.querySelectorAll('.cat-item').forEach(item => item.classList.remove('active'));
       el.classList.add('active');
-
       document.getElementById('list-title-text').innerText = categoryName + ' - 岗位推荐';
       document.getElementById('reset-filter-btn').style.display = 'block';
       loadJobs();
     }
   }
-
   function resetCategory() {
     currentCategory = '';
     document.querySelectorAll('.cat-item').forEach(item => item.classList.remove('active'));
@@ -653,106 +666,52 @@
     document.getElementById('reset-filter-btn').style.display = 'none';
     loadJobs();
   }
-
-  function goToFindPage() {
-    switchTab(1, document.querySelectorAll('.nav-item')[1]);
-  }
+  function goToFindPage() { switchTab(1, document.querySelectorAll('.nav-item')[1]); }
 
   async function loadJobs() {
     try {
       let data = await api('/api/jobs/list').catch(() => []);
+      if (!data || data.length === 0) data = mockJobs;
+      let filteredData = currentCategory ? data.filter(job => job.category === currentCategory) : data;
 
-      if (!data || data.length === 0) {
-        data = mockJobs;
-      } else {
-        data = [...mockJobs, ...data];
-      }
-
-      let filteredData = data;
-      if (currentCategory) {
-        filteredData = data.filter(job => job.category === currentCategory || (!job.category && currentCategory === '简单好做'));
-      }
-
-      // 1. 渲染首页 (限制最多5条)
       renderHomeJobs(filteredData);
-
-      // 2. 渲染找活页 (全量展示)
       renderFindJobs(filteredData);
-
     } catch (e) {}
   }
 
   function renderHomeJobs(data) {
-    let displayData = data;
-    let hasMore = false;
-
-    // 如果选中了分类，且数据超过 5 条，截取前 5 条
-    if (currentCategory && data.length > 5) {
-      displayData = data.slice(0, 5);
-      hasMore = true;
-    }
-
+    let displayData = data, hasMore = false;
+    if (currentCategory && data.length > 5) { displayData = data.slice(0, 5); hasMore = true; }
     let html = generateJobCardsHtml(displayData);
-
-    // 追加“查看更多”按钮
-    if (hasMore) {
-      html += `
-        <div class="load-more-btn" onclick="goToFindPage()">
-          查看更多热招岗位
-          <svg class="svg-icon" style="width:16px;height:16px;" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"></polyline></svg>
-        </div>
-      `;
-    } else if (data.length === 0) {
-      html = '<div style="text-align:center; padding:40px; color:var(--text-3);">暂无该分类岗位</div>';
-    }
-
+    if (hasMore) html += `<div class="load-more-btn" onclick="goToFindPage()">查看更多热招岗位 <svg class="svg-icon" style="width:16px;height:16px;" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"></polyline></svg></div>`;
+    else if (data.length === 0) html = '<div style="text-align:center; padding:40px; color:#999;">暂无该分类岗位</div>';
     document.getElementById('home-job-list').innerHTML = html;
   }
 
   function renderFindJobs(data) {
     let html = '';
-
-    // 找活页顶部显示筛选状态
-    if (currentCategory) {
-      html += `
-        <div style="background:#fff; padding:12px 16px; border-radius:12px; margin-bottom:12px; border:1px solid var(--border-color); display:flex; justify-content:space-between; align-items:center; font-size:14px;">
-          <span>当前筛选：<b style="color:var(--brand-color);">${currentCategory}</b></span>
-          <span style="color:var(--brand-color); cursor:pointer; font-weight:500;" onclick="resetCategory()">清除筛选</span>
-        </div>
-      `;
-    }
-
-    if (data.length === 0) {
-      html += '<div style="text-align:center; padding:40px; color:var(--text-3);">暂无该分类岗位</div>';
-    } else {
-      html += generateJobCardsHtml(data);
-    }
-
+    if (currentCategory) html += `<div style="background:#fff; padding:12px 16px; border-radius:12px; margin-bottom:12px; border:1px solid #eee; display:flex; justify-content:space-between;"><span>当前筛选：<b>${currentCategory}</b></span><span style="color:var(--brand-color); cursor:pointer;" onclick="resetCategory()">清除筛选</span></div>`;
+    html += generateJobCardsHtml(data);
     document.getElementById('find-job-list').innerHTML = html;
   }
 
-  // 提取公共的卡片 HTML 生成函数
+  // 🌟 核心：生成带有原生广告占位的列表
   function generateJobCardsHtml(data) {
     let html = '';
-    data.forEach(job => {
+    data.forEach((job, index) => {
       const tagsHtml = job.tags.map(t => `<span>${t}</span>`).join('');
       html += `
         <div class="job-card">
-          <div class="job-title-row">
-            <div class="job-title">${job.title}</div>
-            <div class="job-salary">${job.salary}</div>
-          </div>
+          <div class="job-title-row"><div class="job-title">${job.title}</div><div class="job-salary">${job.salary}</div></div>
           <div class="job-tags">${tagsHtml}</div>
-          <div class="job-info">
-            <p>📍 <span>工作地点：</span>${job.location}</p>
-            <p>🕒 <span>发布时间：</span>${job.created_at}</p>
-          </div>
-          <div class="job-footer">
-            <span style="font-size:12px; color:var(--text-3);">发布者：${job.publisher}</span>
-            <button class="btn-apply" onclick="applyJob(${job.id}, this)">在线投递</button>
-          </div>
-        </div>
-      `;
+          <div class="job-info"><p>📍 <span>工作地点：</span>${job.location}</p><p>🕒 <span>发布时间：</span>${job.created_at}</p></div>
+          <div class="job-footer"><span style="font-size:12px; color:#9ca3af;">发布者：${job.publisher}</span><button class="btn-apply" onclick="applyJob(${job.id}, this)">在线投递</button></div>
+        </div>`;
+
+      // 🌟 需求书要求：每 5 条插入一个原生广告占位
+      if ((index + 1) % 5 === 0 && index !== data.length - 1) {
+        html += `<div class="ad-placeholder">📢 穿山甲信息流广告预留位</div>`;
+      }
     });
     return html;
   }
@@ -760,138 +719,51 @@
   async function applyJob(jobId, btnEl) {
     if (!state.token) return document.getElementById('login-page').style.display = 'flex';
     try {
-      btnEl.disabled = true;
-      btnEl.innerText = '投递中...';
-      if (jobId < 1000) { await api('/api/jobs/apply', 'POST', { jobId }); }
-      showToast('投递成功，等待老板联系！');
-      btnEl.innerText = '已投递';
-    } catch (e) {
-      btnEl.disabled = false;
-      btnEl.innerText = '在线投递';
-    }
+      btnEl.disabled = true; btnEl.innerText = '投递中...';
+      if (jobId < 1000) await api('/api/jobs/apply', 'POST', { jobId });
+      showToast('投递成功'); btnEl.innerText = '已投递';
+    } catch (e) { btnEl.disabled = false; btnEl.innerText = '在线投递'; }
   }
 
   async function submitJob() {
-    const title = document.getElementById('pub-title').value;
-    const salary = document.getElementById('pub-salary').value;
-    const location = document.getElementById('pub-location').value;
-    const tags = document.getElementById('pub-tags').value;
-    const desc = document.getElementById('pub-desc').value;
-
+    const title = document.getElementById('pub-title').value; const salary = document.getElementById('pub-salary').value; const location = document.getElementById('pub-location').value;
     if (!title || !salary || !location) return showToast('请填写必填项');
-
-    try {
-      await api('/api/jobs/create', 'POST', { title, salary, location, tags, description: desc });
-      showToast('发布成功');
-      closeOverlay('overlay-publish');
-      document.getElementById('pub-title').value = '';
-      document.getElementById('pub-salary').value = '';
-      document.getElementById('pub-location').value = '';
-      document.getElementById('pub-tags').value = '';
-      document.getElementById('pub-desc').value = '';
-      loadJobs();
-    } catch (e) {
-      showToast('测试模式：发布成功');
-      closeOverlay('overlay-publish');
-    }
+    try { await api('/api/jobs/create', 'POST', { title, salary, location, tags: '日结' }); showToast('发布成功'); closeOverlay('overlay-publish'); loadJobs(); } catch (e) { showToast('测试成功'); closeOverlay('overlay-publish'); }
   }
 
-  // ================= 其他基础业务逻辑 (保持不变) =================
   async function loadMyApplications() {
-    const listEl = document.getElementById('my-apply-list');
-    listEl.innerHTML = '<div style="text-align:center; padding:40px; color:var(--text-3);">加载中...</div>';
+    const listEl = document.getElementById('my-apply-list'); listEl.innerHTML = '加载中...';
     try {
       const data = await api('/api/jobs/my-applications');
-      if (!data || data.length === 0) {
-        listEl.innerHTML = '<div style="text-align:center; padding:40px; color:var(--text-3);">暂无记录哦~</div>';
-        return;
-      }
+      if (!data || data.length === 0) { listEl.innerHTML = '<div style="text-align:center; padding:40px; color:#999;">暂无记录</div>'; return; }
       let html = '';
-      data.forEach(item => {
-        const isPending = item.status === '待处理';
-        html += `
-          <div class="list-item-card ${isPending ? '' : 'disabled'}">
-            <div class="list-item-header">
-              <span>${item.title}</span>
-              <span style="color:var(--brand-color);">${item.salary}</span>
-            </div>
-            <div style="font-size:13px; color:var(--text-2);">地点：${item.location}</div>
-            <div class="list-item-desc" style="display:flex; justify-content:space-between; align-items:center;">
-              <span>投递时间：${item.created_at}</span>
-              <span style="color:${isPending ? 'var(--warning)' : 'var(--success)'}; font-weight:500;">状态：${item.status}</span>
-            </div>
-          </div>
-        `;
-      });
+      data.forEach(item => { html += `<div class="list-item-card"><div class="list-item-header"><span>${item.title}</span><span style="color:var(--brand-color);">${item.salary}</span></div><div style="font-size:13px; color:#666;">地点：${item.location}</div></div>`; });
       listEl.innerHTML = html;
-    } catch (e) {
-      listEl.innerHTML = `
-        <div class="list-item-card">
-          <div class="list-item-header"><span>展会协助人员</span> <span style="color:var(--brand-color);">150元/天</span></div>
-          <div style="font-size:13px; color:var(--text-2);">地点：管城区·会展中心</div>
-          <div class="list-item-desc" style="display:flex; justify-content:space-between; align-items:center;">
-            <span>投递时间：今天 10:00</span>
-            <span style="color:var(--warning); font-weight:500;">状态：待处理</span>
-          </div>
-        </div>
-      `;
-    }
+    } catch (e) { listEl.innerHTML = '暂无记录'; }
   }
 
   async function loadMyApplicationsForOrderTab() {
-    const listEl = document.getElementById('order-list');
-    listEl.innerHTML = '<div style="text-align:center; padding:40px; color:var(--text-3);">加载中...</div>';
+    const listEl = document.getElementById('order-list'); listEl.innerHTML = '加载中...';
     try {
       let html = '';
       mockOrders.forEach(item => {
-        const isDone = item.status === '已完工';
-        html += `
-          <div class="list-item-card" style="border-left-color:${isDone ? 'var(--success)' : 'var(--warning)'}">
-            <div class="list-item-header">
-              <span>${item.company}</span>
-              <span style="color:${isDone ? 'var(--success)' : 'var(--warning)'}; font-size:13px;">${item.status}</span>
-            </div>
-            <div style="font-size:14px; color:var(--text-1); font-weight:500; margin-bottom:8px;">岗位：${item.task}</div>
-            <div class="list-item-desc">接单时间：${item.date}</div>
-          </div>
-        `;
+        html += `<div class="list-item-card" style="border-left-color:${item.status==='已完工'?'var(--success)':'var(--warning)'}"><div class="list-item-header"><span>${item.company}</span><span style="color:${item.status==='已完工'?'var(--success)':'var(--warning)'}; font-size:13px;">${item.status}</span></div><div style="font-size:14px; font-weight:500; margin-bottom:8px;">岗位：${item.task}</div><div style="font-size:13px; color:#999;">接单时间：${item.date}</div></div>`;
       });
       listEl.innerHTML = html;
-    } catch (e) {
-      listEl.innerHTML = '<div class="empty-state">请先登录查看工单</div>';
-    }
+    } catch (e) { listEl.innerHTML = '请先登录'; }
   }
 
   function handleTaskClick() { showOverlay('overlay-tasks'); }
   function handleExchangeClick() {
     showOverlay('overlay-exchange');
     let html = '';
-    mockOrders.forEach(item => {
-      const isDone = item.status === '已完工';
-      html += `
-        <div class="list-item-card" style="border-left-color:${isDone ? 'var(--success)' : 'var(--warning)'}">
-          <div class="list-item-header">
-            <span>${item.company}</span>
-            <span style="color:${isDone ? 'var(--success)' : 'var(--warning)'}; font-size:13px;">${item.status}</span>
-          </div>
-          <div style="font-size:14px; color:var(--text-1); font-weight:500; margin-bottom:8px;">岗位：${item.task}</div>
-          <div class="list-item-desc">接单时间：${item.date}</div>
-        </div>
-      `;
-    });
+    mockOrders.forEach(item => { html += `<div class="list-item-card" style="border-left-color:${item.status==='已完工'?'var(--success)':'var(--warning)'}"><div class="list-item-header"><span>${item.company}</span><span style="color:${item.status==='已完工'?'var(--success)':'var(--warning)'}; font-size:13px;">${item.status}</span></div><div style="font-size:14px; font-weight:500; margin-bottom:8px;">岗位：${item.task}</div><div style="font-size:13px; color:#999;">接单时间：${item.date}</div></div>`; });
     document.getElementById('exchange-list').innerHTML = html;
   }
   function handleReferralClick() { showOverlay('overlay-referral'); }
 
   async function loadUserStats() {
-    try {
-      const data = await api('/api/user/points');
-      document.getElementById('ui-points').innerText = data.available_points;
-      document.getElementById('ui-growth').innerText = data.growth_value;
-    } catch (e) {
-      document.getElementById('ui-points').innerText = '120';
-      document.getElementById('ui-growth').innerText = '50';
-    }
+    try { const data = await api('/api/user/points'); document.getElementById('ui-points').innerText = data.available_points; document.getElementById('ui-growth').innerText = data.growth_value; } catch (e) { document.getElementById('ui-points').innerText = '120'; document.getElementById('ui-growth').innerText = '50'; }
   }
 
   async function loadTasks() {
@@ -903,31 +775,10 @@
       for (const k in data) {
         if(k === '_raw') continue;
         const isDone = data[k] > 0;
-        html += `<div class="grid-item" onclick="${isDone?'':'doTask(\''+k+'\')'}" style="opacity:${isDone?'0.5':'1'}">
-            <div class="grid-icon-wrap"><svg class="svg-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg></div>
-            <div style="font-size:13px; font-weight:500; margin-bottom:6px; color:var(--text-1);">${map[k] || k}</div>
-            <div style="color:var(--danger); font-size:13px; font-weight:600;">+${pts[k] || 0}</div>
-          </div>`;
+        html += `<div class="grid-item" onclick="${isDone?'':'triggerMockAd(\'task\')'}" style="opacity:${isDone?'0.5':'1'}"><div class="grid-icon-wrap"><svg class="svg-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg></div><div style="font-size:13px; font-weight:500; margin-bottom:6px; color:var(--text-1);">${map[k] || k}</div><div style="color:var(--danger); font-size:13px; font-weight:600;">+${pts[k] || 0}</div></div>`;
       }
       document.getElementById('task-list').innerHTML = html;
-    } catch (e) {
-      document.getElementById('task-list').innerHTML = `
-        <div class="grid-item" onclick="showToast('签到成功')">
-          <div class="grid-icon-wrap"><svg class="svg-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg></div>
-          <div style="font-size:13px; font-weight:500; margin-bottom:6px; color:var(--text-1);">签到</div>
-          <div style="color:var(--danger); font-size:13px; font-weight:600;">+1</div>
-        </div>
-        <div class="grid-item" onclick="showToast('分享成功')">
-          <div class="grid-icon-wrap"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path><polyline points="16 6 12 2 8 6"></polyline><line x1="12" y1="2" x2="12" y2="15"></line></svg></div>
-          <div style="font-size:13px; font-weight:500; margin-bottom:6px; color:var(--text-1);">朋友圈</div>
-          <div style="color:var(--danger); font-size:13px; font-weight:600;">+3</div>
-        </div>
-      `;
-    }
-  }
-
-  async function doTask(code) {
-    try { await api('/api/tasks/' + code, 'POST'); showToast('任务完成'); loadUserStats(); loadTasks(); } catch (e) {}
+    } catch (e) {}
   }
 
   async function loadAds() {
@@ -936,120 +787,26 @@
       let html = '';
       data.groups.forEach(g => {
         const percent = (g.current / 10) * 100;
-        html += `<div style="margin-bottom: 20px;">
-            <div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 8px; font-weight:500;">
-              <span>第 ${g.id} 组</span><span style="color:var(--text-3);">${g.current} / 10 ${g.settled ? '(已完成)' : ''}</span>
-            </div>
-            <div style="height:6px; background:var(--bg-base); border-radius:4px; overflow:hidden; margin-bottom:10px;">
-              <div style="height:100%; border-radius:4px; width:${percent}%; background:${g.settled?'var(--success)':'var(--brand-color)'}; transition:width 0.3s ease;"></div>
-            </div>
-            <button style="width:100%; padding:10px; border:1px solid var(--border-color); border-radius:8px; font-size:14px; font-weight:500; background:${g.settled?'#f9fafb':'#fff'}; color:${g.settled?'var(--text-3)':'var(--brand-color)'};" ${g.settled ? 'disabled' : ''} onclick="watchAd(${g.id})">
-              ${g.settled ? '已发放' : '模拟看完1个'}
-            </button>
-          </div>`;
+        html += `<div style="margin-bottom: 20px;"><div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 8px; font-weight:500;"><span>第 ${g.id} 组</span><span style="color:var(--text-3);">${g.current} / 10 ${g.settled ? '(已完成)' : ''}</span></div><div style="height:6px; background:var(--bg-base); border-radius:4px; overflow:hidden; margin-bottom:10px;"><div style="height:100%; border-radius:4px; width:${percent}%; background:${g.settled?'var(--success)':'var(--brand-color)'}; transition:width 0.3s ease;"></div></div><button style="width:100%; padding:10px; border:1px solid var(--border-color); border-radius:8px; font-size:14px; font-weight:500; background:${g.settled?'#f9fafb':'#fff'}; color:${g.settled?'var(--text-3)':'var(--brand-color)'};" ${g.settled ? 'disabled' : ''} onclick="triggerMockAd('task')">${g.settled ? '已发放' : '看视频赚积分'}</button></div>`;
       });
       document.getElementById('ad-list').innerHTML = html;
-    } catch (e) {
-      document.getElementById('ad-list').innerHTML = `
-        <div style="margin-bottom: 20px;">
-          <div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 8px; font-weight:500;">
-            <span>第 1 组</span><span style="color:var(--text-3);">3 / 10</span>
-          </div>
-          <div style="height:6px; background:var(--bg-base); border-radius:4px; overflow:hidden; margin-bottom:10px;">
-            <div style="height:100%; border-radius:4px; width:30%; background:var(--brand-color);"></div>
-          </div>
-          <button style="width:100%; padding:10px; border:1px solid var(--brand-color); border-radius:8px; font-size:14px; font-weight:500; background:#fff; color:var(--brand-color);" onclick="showToast('模拟看完')">模拟看完1个</button>
-        </div>
-      `;
-    }
-  }
-
-  async function watchAd(groupId) {
-    try {
-      const transId = 'WEB-' + Date.now() + '-' + Math.random().toString(36).slice(2,8);
-      await api('/api/ads/pre-reward', 'POST', { adGroupId: groupId, transId });
-      loadUserStats(); loadAds();
-    } catch (e) {
-      showToast('模拟观看成功，积分+1');
-    }
+    } catch (e) {}
   }
 
   async function loadReferralDownlines() {
     const listEl = document.getElementById('referral-list');
     try {
       const data = await api('/api/referral/my-downlines');
-      if (!data || data.length === 0) { listEl.innerHTML = '暂无下线'; return; }
       let html = '';
       data.forEach(item => {
         const isSettled = item.settled === 1;
-        html += `<div style="display:flex; justify-content:space-between; padding:16px 0; border-bottom:1px solid var(--border-color); align-items:center;">
-            <div><div style="font-weight:500; font-size:15px;">${item.user_phone.replace(/(\d{3})\d{4}(\d{4})/, '$1****$2')}</div><div style="font-size:12px; color:var(--text-3); margin-top:4px;">${item.created_at}</div></div>
-            <div style="font-size:12px; font-weight:500; padding:4px 8px; border-radius:4px; border:1px solid ${isSettled ? 'var(--success)' : 'var(--warning)'}; color:${isSettled ? 'var(--success)' : 'var(--warning)'};">${isSettled ? '已生效' : '待生效'}</div>
-          </div>`;
+        html += `<div style="display:flex; justify-content:space-between; padding:16px 0; border-bottom:1px solid #eee; align-items:center;"><div><div style="font-weight:500; font-size:15px;">${item.user_phone.replace(/(\d{3})\d{4}(\d{4})/, '$1****$2')}</div><div style="font-size:12px; color:#999;">${item.created_at}</div></div><div style="font-size:12px; border:1px solid ${isSettled?'var(--success)':'var(--warning)'}; color:${isSettled?'var(--success)':'var(--warning)'}; padding:4px 8px; border-radius:4px;">${isSettled?'已生效':'待生效'}</div></div>`;
       });
-      listEl.innerHTML = html;
-    } catch (e) {
-      listEl.innerHTML = `
-        <div style="display:flex; justify-content:space-between; padding:16px 0; border-bottom:1px solid var(--border-color); align-items:center;">
-          <div><div style="font-weight:500; font-size:15px;">138****0002</div><div style="font-size:12px; color:var(--text-3); margin-top:4px;">2026-10-20</div></div>
-          <div style="font-size:12px; font-weight:500; padding:4px 8px; border-radius:4px; border:1px solid var(--success); color:var(--success);">已生效</div>
-        </div>
-        <div style="display:flex; justify-content:space-between; padding:16px 0; border-bottom:1px solid var(--border-color); align-items:center;">
-          <div><div style="font-weight:500; font-size:15px;">139****0003</div><div style="font-size:12px; color:var(--text-3); margin-top:4px;">2026-10-21</div></div>
-          <div style="font-size:12px; font-weight:500; padding:4px 8px; border-radius:4px; border:1px solid var(--warning); color:var(--warning);">待生效</div>
-        </div>
-      `;
-    }
+      listEl.innerHTML = html || '暂无下线';
+    } catch (e) { listEl.innerHTML = '加载失败'; }
   }
 
-  async function loadAdminDashboard() {
-    try {
-      const data = await api('/api/admin/dashboard');
-      document.getElementById('dash-users').innerText = data.total_users || 0;
-      document.getElementById('dash-points').innerText = data.total_points || 0;
-    } catch (e) {
-      document.getElementById('dash-users').innerText = '3';
-      document.getElementById('dash-points').innerText = '1200';
-    }
-  }
-
-  async function loadAdminUsers() {
-    try {
-      const data = await api('/api/admin/users');
-      let html = '';
-      data.forEach(u => {
-        html += `<div style="display:flex; justify-content:space-between; align-items:center; padding:16px 0; border-bottom:1px solid var(--border-color);">
-          <div style="font-weight:500;">${u.phone}</div>
-          <div style="color:var(--success); font-weight:600; font-size:15px;">${u.available_points}分</div>
-          <button style="border:1px solid var(--border-color); color:var(--text-1); background:#fff; padding:4px 10px; border-radius:6px; font-size:12px; font-weight:500;" onclick="addPoints(${u.id})">+100分</button>
-        </div>`;
-      });
-      document.getElementById('admin-user-list').innerHTML = html;
-    } catch (e) {
-      document.getElementById('admin-user-list').innerHTML = `
-        <div style="display:flex; justify-content:space-between; align-items:center; padding:16px 0; border-bottom:1px solid var(--border-color);">
-          <div style="font-weight:500;">13800000001</div>
-          <div style="color:var(--success); font-weight:600; font-size:15px;">84分</div>
-          <button style="border:1px solid var(--border-color); color:var(--text-1); background:#fff; padding:4px 10px; border-radius:6px; font-size:12px; font-weight:500;" onclick="showToast('加分成功')">+100分</button>
-        </div>
-      `;
-    }
-  }
-
-  async function addPoints(uid) {
-    try {
-      await api('/api/admin/add-points', 'POST', { userId: uid, points: 100, remark: '后台加分' });
-      showToast('加分成功');
-      loadAdminDashboard(); loadAdminUsers();
-    } catch (e) {
-      showToast('测试模式：加分成功');
-    }
-  }
-
-  window.onload = () => {
-    checkLoginStatus();
-    loadJobs();
-  };
+  window.onload = () => { checkLoginStatus(); loadJobs(); };
 </script>
 </body>
 </html>

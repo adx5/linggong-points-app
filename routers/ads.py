@@ -78,14 +78,21 @@ async def ad_status(
 
 @router.post("/pre-reward")
 async def pre_reward(
-    body: PreRewardIn,
-    authorization: str = Header(..., alias="Authorization"),
-    db: AsyncSession = Depends(get_db),
+        body: PreRewardIn,
+        authorization: str = Header(..., alias="Authorization"),
+        db: AsyncSession = Depends(get_db)
 ):
     uid = require_user(authorization)
-    group = await db.get(AdGroup, body.adGroupId)
-    if not group or not group.is_active:
-        raise HTTPException(status_code=404, detail="广告组不存在")
+
+    # 🌟 新增：校验今日广告观看总次数（限制 10 次）
+    today_start = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+    count_r = await db.execute(
+        select(func.count()).select_from(AdCallbackLog)
+        .where(AdCallbackLog.user_id == uid, AdCallbackLog.created_at >= today_start)
+    )
+    today_count = count_r.scalar() or 0
+    if today_count >= 10:
+        raise HTTPException(status_code=400, detail="今日观看广告次数已达上限，明天再来吧~")
 
     # 幂等：同一 transId 只记一次
     if body.transId:

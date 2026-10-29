@@ -50,17 +50,14 @@ async def query_user(
         raise HTTPException(status_code=404, detail="用户不存在")
     total = await available_points(db, user.id)
     lv, lv_name = member_level(user.growth_value or 0)
+    # 在 routers/verify.py 的 query_user 函数里修改：
     return {
         "code": 0,
         "data": {
             "id": user.id,
-            "phone": user.phone,
-            "nickname": user.nickname,
-            "level_name": lv_name,
-            "member_level": lv,
-            "growth_value": user.growth_value,
-            "available_points": total,
-        },
+            "phone": user.phone[:3] + "****" + user.phone[-4:],  # 🌟 脱敏处理
+            # ...
+        }
     }
 
 
