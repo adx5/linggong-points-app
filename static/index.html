@@ -807,24 +807,9 @@
   }
 
   // 在 index.html 的 window.onload 里面加入：
-  window.onload = () => {
+    window.onload = () => {
     checkLoginStatus();
     loadJobs();
-
-    // 🌟 微信小程序环境专属适配 (保留全功能)
-    const isWeChat = /MicroMessenger/i.test(navigator.userAgent);
-
-    if (isWeChat) {
-        // 1. 解决全局顶部胶囊按钮遮挡问题
-        document.body.style.paddingTop = '75px';
-
-        // 2. 把底部的安全区垫高，防止被手机底部黑条挡住
-        const bottomNav = document.querySelector('.bottom-nav');
-        if (bottomNav) {
-            bottomNav.style.paddingBottom = 'calc(env(safe-area-inset-bottom) + 8px)';
-            bottomNav.style.height = 'auto';
-        }
-    }
   };
 </script>
 </body>
