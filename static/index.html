@@ -807,28 +807,66 @@
   }
 
   // 在 index.html 的 window.onload 里面加入：
-window.onload = () => {
+  window.onload = () => {
     checkLoginStatus();
     loadJobs();
 
-    // 🌟 核心：微信小程序环境判断
+    // ==========================================
+    // 🌟 微信小程序环境专属适配 (伪装工具类小程序)
+    // ==========================================
     const isWeChat = /MicroMessenger/i.test(navigator.userAgent);
+
     if (isWeChat) {
-        // 1. 隐藏底部的“首页”和“我的”
-        document.querySelectorAll('.nav-item')[0].style.display = 'none'; // 隐藏首页
-        document.querySelectorAll('.nav-item')[1].style.display = 'none'; // 隐藏找活
-        document.querySelectorAll('.nav-item')[4].style.display = 'none'; // 隐藏我的
+        // 1. 解决顶部胶囊按钮遮挡问题 (把蓝色头部往下压)
+        const header = document.querySelector('.home-header');
+        if(header) {
+            header.style.paddingTop = '90px';
+        }
 
-        // 2. 隐藏所有违法/敏感元素
-        document.body.innerHTML = document.body.innerHTML.replace(/招聘/g, '学习'); // 低级脱敏
-        // ...
+        // 2. 安全隐藏底部多余的 Tab (不破坏事件绑定)
+        const navItems = document.querySelectorAll('.nav-item');
+        if(navItems.length >= 5) {
+            navItems[0].style.display = 'none'; // 隐藏首页
+            navItems[1].style.display = 'none'; // 隐藏找活
+            navItems[4].style.display = 'none'; // 隐藏个人中心
+        }
 
-        // 3. 强制切换到“记工时”Tab
+        // 3. 因为隐藏了首页，把页面底部的安全区垫高一点，防止被手机黑条挡住
+        const bottomNav = document.querySelector('.bottom-nav');
+        if(bottomNav) {
+            bottomNav.style.paddingBottom = 'calc(env(safe-area-inset-bottom) + 10px)';
+            bottomNav.style.height = 'auto';
+        }
+
+        // 4. 强制切换到“记工时”Tab (索引为2)
+        // 因为底部现在只剩“记工时”和“工单”两个按钮，会自动居中对齐
         switchTab(2, document.querySelectorAll('.nav-item')[2]);
 
-        // 4. 在记工时页面里增加一个“去答题”的悬浮按钮或入口
+        // 5. 在记工时页面动态注入“安全答题”入口（替代原来个人中心的入口）
+        const worklogPage = document.querySelector('.worklog-page');
+        if (worklogPage && !document.getElementById('wechat-quiz-btn')) {
+            const quizBtnHtml = `
+                <div style="background:#fff; border-radius:12px; padding:16px; margin-top:20px; display:flex; justify-content:space-between; align-items:center; border:1px solid #e5e7eb; cursor:pointer;" onclick="showOverlay('overlay-quiz')">
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        <div style="width:40px; height:40px; background:#eff6ff; border-radius:50%; display:flex; justify-content:center; align-items:center; color:#2563eb;">
+                            <svg class="svg-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+                        </div>
+                        <div>
+                            <div style="font-weight:600; font-size:15px; color:#111827;">零工安全防坑答题</div>
+                            <div style="font-size:12px; color:#9ca3af;">每日一题，提高自我保护意识</div>
+                        </div>
+                    </div>
+                    <div style="color:#9ca3af;">&gt;</div>
+                </div>
+            `;
+            // 把答题按钮插在计时大圆圈的上方
+            const clockCircle = document.getElementById('clock-circle');
+            if(clockCircle) {
+                clockCircle.insertAdjacentHTML('beforebegin', quizBtnHtml);
+            }
+        }
     }
-};
+  };
 </script>
 </body>
 </html>
