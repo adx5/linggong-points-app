@@ -20,12 +20,12 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(lifespan=lifespan)
 
-# 🚨 修复硬伤 2：CORS 强校验，发现 "*" 直接拒绝启动
+# 🚨 1. CORS 白名单强校验
 ALLOW_ORIGINS_STR = os.environ.get("ALLOW_ORIGINS", "http://localhost:5173,http://127.0.0.1:5173")
 ALLOW_ORIGINS = [origin.strip() for origin in ALLOW_ORIGINS_STR.split(",")]
 
-if "*" in ALLOW_ORIGINS:
-    raise ValueError("🚨 致命错误：CORS 白名单不能配置为 '*'，请配置具体的域名！")
+if "*" in ALLOW_ORIGINS and os.environ.get("ENV") != "dev":
+    raise ValueError("🚨 致命错误：生产/Staging 环境 CORS 白名单不能配置为 '*'！")
 
 app.add_middleware(
     CORSMiddleware,
@@ -37,17 +37,18 @@ app.add_middleware(
 
 # 管理端 IP 白名单
 ALLOWED_ADMIN_IPS = os.environ.get("ALLOWED_ADMIN_IPS", "127.0.0.1,::1").split(",")
+IS_STAGING = os.environ.get("ENV", "dev") != "prod"
 
 
 @app.middleware("http")
 async def admin_ip_whitelist_middleware(request: Request, call_next):
     path = request.url.path
     if path.startswith("/api/admin/") or path.startswith("/api/audit/"):
-        # 🚨 修复硬伤 3：云托管场景下，只有网关可信时才取 X-Forwarded-For
-        # 目前直接取 client.host，或者要求网关传递真实 IP。这里演示强校验逻辑。
-        client_ip = request.client.host
+        # 🚨 2. Staging 演示环境暂时关闭 IP 限制，防止 CloudBase 内网 IP 误拦截
+        if IS_STAGING:
+            return await call_next(request)
 
-        # 如果非本地，且不在白名单，直接 403
+        client_ip = request.client.host
         if client_ip not in ALLOWED_ADMIN_IPS:
             return JSONResponse(status_code=403, content={"detail": "非法 IP 访问管理接口"})
 
