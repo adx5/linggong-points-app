@@ -11,6 +11,9 @@ PyJWT==2.9.0
 redis==5.0.8
 hypercorn==0.18.0
 
-# 🚨 补充遗漏的图片处理与文件校验依赖
+# 🚨 图片处理与文件校验依赖 (upload.py)
 Pillow==11.1.0
 filetype==1.2.0
+
+# 🚨 定时任务依赖 (scheduler.py)
+APScheduler==3.10.4
