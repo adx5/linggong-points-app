@@ -1,0 +1,89 @@
+# ==========================================
+# 🚨 核心红线：敏感信息与密钥 (绝对禁止提交)
+# ==========================================
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+*.cert
+config/secrets.json
+
+# ==========================================
+# 🐍 Python / Backend (FastAPI) 忽略项
+# ==========================================
+# 虚拟环境
+.venv/
+venv/
+env/
+ENV/
+# Python 编译缓存
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+# 本地数据库与持久化文件
+*.sqlite3
+*.db
+backend/uploads/
+backend/logs/
+
+# ==========================================
+# 🌐 Node.js / Frontend (Vue/Vite) 忽略项
+# ==========================================
+# 依赖包
+node_modules/
+# 打包产物
+dist/
+dist-ssr/
+*.local
+# 日志文件
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+.vite/
+
+# ==========================================
+# 💻 IDE / 编辑器配置
+# ==========================================
+.vscode/*
+!.vscode/extensions.json
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# ==========================================
+# 💻 操作系统生成文件
+# ==========================================
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+# Linux
+*~
+.directory
