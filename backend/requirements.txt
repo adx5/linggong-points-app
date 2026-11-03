@@ -1,4 +1,4 @@
-# (后端Python依赖清单)
+# backend/requirements.txt (后端 Python 依赖清单)
 fastapi==0.115.0
 uvicorn[standard]==0.32.0
 sqlalchemy==2.0.36
@@ -9,4 +9,8 @@ python-multipart==0.0.12
 python-dotenv==1.0.1
 PyJWT==2.9.0
 redis==5.0.8
-hypercorn
+hypercorn==0.18.0
+
+# 🚨 补充遗漏的图片处理与文件校验依赖
+Pillow==11.1.0
+filetype==1.2.0
