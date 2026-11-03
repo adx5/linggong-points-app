@@ -9,3 +9,4 @@ python-multipart==0.0.12
 python-dotenv==1.0.1
 PyJWT==2.9.0
 redis==5.0.8
+hypercorn
