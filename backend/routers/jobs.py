@@ -7,7 +7,9 @@ from typing import Optional
 from datetime import datetime
 from database import get_db
 from models import Job, JobApplication, User, CooperationEntity, Notification, Review, Interview, ApplicationLog
+from fastapi import APIRouter, Depends, HTTPException, Header  # 🚨 引入 Header
 from core.security import get_current_user, get_optional_user, require_roles, apply_city_filter, verify_resource_city
+
 
 # 🚨 核心修复：确保路由对象在最顶部被正确初始化
 router = APIRouter(prefix="/api/jobs", tags=["jobs"])
@@ -41,19 +43,24 @@ class InviteReq(BaseModel):
 # 第一部分：静态路径（包含游客白名单）
 # ==========================================
 
+
+
+# ... (其他代码不变) ...
+
 @router.get("/list")
 async def get_jobs(
         job_type: Optional[str] = None,
         filter_tag: Optional[str] = None,
         keyword: Optional[str] = None,
         city_id: Optional[str] = None,
+        x_city_id: Optional[str] = Header(None),  # 🚨 新增：接收前端拦截器传来的 Header
         page: int = 1,
         size: int = 10,
         db: AsyncSession = Depends(get_db),
         current_user: User | None = Depends(get_optional_user)
 ):
-    # 如果没有传城市，保底使用登封 410185
-    current_city = city_id or "410185"
+    # 🚨 修复城市获取逻辑：优先用 Header，其次 Query，最后默认登封
+    current_city = x_city_id or city_id or "410185"
 
     if current_city not in ['410185', '410173', '411300']:
         raise HTTPException(status_code=400, detail="当前城市暂未开放")
