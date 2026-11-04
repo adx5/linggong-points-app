@@ -1,4 +1,4 @@
-<!-- (B端用工结算：履约中 + 待评价/已完成) -->
+<!-- frontend/src/views/merchant/MerchantSettlement.vue (B端用工结算：修复状态判断与评价报错) -->
 <template>
   <div class="settlement-page">
     <div class="sticky-header">
@@ -52,18 +52,25 @@ const mainTab = ref('working')
 const list = ref([])
 
 const loadData = async () => {
-  const res = await api.get('/jobs/received')
-  const raw = res.data.filter(item => [5, 7, 8].includes(item.status))
+  try {
+    const res = await api.get('/jobs/received')
+    // 筛选 5:已录用, 7:申请结单中, 8:已完工
+    const raw = res.data.filter(item => [5, 7, 8].includes(item.status))
 
-  const reviewRes = await api.get('/jobs/pending-reviews')
-  list.value = raw.map(item => {
-    const isRated = item.status === 8 && !reviewRes.data.some(r => r.application_id === item.id)
-    return { ...item, currentStar: 5, star: isRated ? 5 : null }
-  })
+    const reviewRes = await api.get('/jobs/pending-reviews')
+    list.value = raw.map(item => {
+      // 如果状态是8，且不在待评价列表里，说明已经评过价了
+      const isRated = item.status === 8 && !reviewRes.data.some(r => r.application_id === item.id)
+      return { ...item, currentStar: 5, star: isRated ? 5 : null }
+    })
+  } catch (err) {
+    window.$toast('获取数据失败')
+  }
 }
 
 const displayList = computed(() => {
   if (mainTab.value === 'working') return list.value.filter(item => item.status === 5)
+  // 待评价：状态7或者状态8且没打分
   return list.value.filter(item => [7, 8].includes(item.status))
 })
 
@@ -72,11 +79,17 @@ const setStar = (item, star) => { item.currentStar = star }
 const confirmAndReview = async (item) => {
   if (!item.currentStar) return window.$toast('请先打分')
   try {
+    // 🚨 修复：只有状态 7 才调确认完工接口，状态 8 直接调评价接口
     if (item.status === 7) {
       await api.put(`/jobs/application/${item.id}/confirm-finish`)
     }
-    await api.post('/jobs/review', { application_id: item.id, rating: item.currentStar, comment: "" })
-    window.$toast('已完工并评价成功')
+
+    // 调用评价接口 (如果之前没评过)
+    if (!item.star) {
+      await api.post('/jobs/review', { application_id: item.id, rating: item.currentStar, comment: "" })
+    }
+
+    window.$toast('操作成功')
     loadData()
   } catch (err) {
     window.$toast(err.response?.data?.detail || '操作失败')

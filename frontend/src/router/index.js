@@ -1,4 +1,4 @@
-// frontend/src/router/index.js (路由配置：包含实名认证)
+// frontend/src/router/index.js (完整：新增积分明细路由)
 import { createRouter, createWebHashHistory } from 'vue-router'
 
 const router = createRouter({
@@ -7,7 +7,6 @@ const router = createRouter({
     { path: '/', redirect: '/worker/home' },
     { path: '/login', component: () => import('../views/Login.vue') },
 
-    // ================= C端 =================
     {
       path: '/worker',
       component: () => import('../layout/WorkerLayout.vue'),
@@ -23,11 +22,11 @@ const router = createRouter({
         { path: 'exchange', component: () => import('../views/worker/WorkerExchange.vue'), meta: { requireAuth: true } },
         { path: 'mine', component: () => import('../views/worker/WorkerMine.vue'), meta: { requireAuth: true } },
         { path: 'resume', component: () => import('../views/worker/WorkerResume.vue'), meta: { requireAuth: true } },
-        { path: 'verify', component: () => import('../views/worker/WorkerVerify.vue'), meta: { requireAuth: true } }
+        { path: 'verify', component: () => import('../views/worker/WorkerVerify.vue'), meta: { requireAuth: true } },
+        { path: 'points', component: () => import('../views/worker/WorkerPoints.vue'), meta: { requireAuth: true } }
       ]
     },
 
-    // ================= B端 =================
     {
       path: '/merchant',
       component: () => import('../layout/MerchantLayout.vue'),
@@ -49,7 +48,6 @@ const router = createRouter({
     { path: '/merchant/info', component: () => import('../views/merchant/MerchantInfo.vue'), meta: { role: 'merchant', requireAuth: true } },
     { path: '/merchant/verify', component: () => import('../views/merchant/MerchantVerify.vue'), meta: { role: 'merchant', requireAuth: true } },
 
-    // ================= Admin端 =================
     {
       path: '/admin',
       component: () => import('../layout/AdminLayout.vue'),
@@ -70,7 +68,6 @@ router.beforeEach((to, from, next) => {
   const activeRole = localStorage.getItem('activeRole')
 
   if (to.path === '/login') return next()
-
   const requireAuth = to.matched.some(record => record.meta.requireAuth)
 
   if (!token && requireAuth) {

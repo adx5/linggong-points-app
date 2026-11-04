@@ -1,18 +1,22 @@
-<!-- frontend/src/views/worker/WorkerMine.vue (C端个人中心：增加实名认证入口) -->
+<!-- frontend/src/views/worker/WorkerMine.vue (C端个人中心：动态展示实名信息与积分明细入口) -->
 <template>
   <div class="mine-page">
     <div class="header">
       <div class="user-info">
-        <div class="avatar">打</div>
+        <!-- 动态头像 -->
+        <div class="avatar">{{ avatarChar }}</div>
         <div class="info">
-          <h3>超级打工人</h3>
-          <p>求职者身份</p>
+          <!-- 动态名称：如 王先生 / 李女士 -->
+          <h3>{{ displayName }}</h3>
+          <p v-if="isVerified" class="verified-tag">已实名认证</p>
+          <p v-else>求职者身份</p>
         </div>
       </div>
       <div class="stats">
-        <div class="stat-item">
+        <!-- 点击跳转积分明细 -->
+        <div class="stat-item" @click="$router.push('/worker/points')">
           <span class="val">{{ points }}</span>
-          <span class="label">可用积分</span>
+          <span class="label">可用积分 <span style="font-size:10px">></span></span>
         </div>
         <div class="stat-item">
           <span class="val">0</span>
@@ -46,7 +50,6 @@
         <div class="icon-wrap" style="background:#e0f2fe; color:#0ea5e9;">📝</div>
         <span>简历维护</span>
       </div>
-      <!-- 🚨 实名认证入口 -->
       <div class="grid-item" @click="$router.push('/worker/verify')">
         <div class="icon-wrap" style="background:#ecfdf5; color:#10b981;">🛡️</div>
         <span>实名认证</span>
@@ -64,17 +67,46 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import api from '../../api'
 
 const router = useRouter()
 const points = ref(0)
+const realName = ref('')
+const gender = ref('')
+const isVerified = ref(false)
+
+// 计算头像显示文字（姓氏）
+const avatarChar = computed(() => {
+  if (isVerified.value && realName.value) {
+    return realName.value.charAt(0)
+  }
+  return '打'
+})
+
+// 计算名称展示（姓名 + 先生/女士）
+const displayName = computed(() => {
+  if (isVerified.value && realName.value) {
+    let suffix = gender.value === '女' ? '女士' : '先生'
+    return `${realName.value}${suffix}`
+  }
+  return '超级打工人'
+})
 
 onMounted(async () => {
   try {
-    const res = await api.get('/user/points')
-    points.value = res.data.points
+    const resPoints = await api.get('/user/points')
+    points.value = resPoints.data.points
+  } catch (err) {}
+
+  try {
+    const resProfile = await api.get('/user/profile')
+    if (resProfile.data.verify_status === 'verified') {
+      isVerified.value = true
+      realName.value = resProfile.data.real_name
+      gender.value = resProfile.data.gender
+    }
   } catch (err) {}
 })
 
@@ -92,8 +124,9 @@ const logout = () => {
 .avatar { width: 60px; height: 60px; background: #fff; color: #2563eb; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 24px; font-weight: bold; }
 .info h3 { font-size: 20px; margin-bottom: 4px; }
 .info p { font-size: 13px; opacity: 0.9; }
+.verified-tag { background: rgba(255,255,255,0.2); display: inline-block; padding: 2px 8px; border-radius: 10px; font-weight: bold; }
 .stats { display: flex; border-top: 1px solid rgba(255,255,255,0.2); padding-top: 15px; }
-.stat-item { flex: 1; text-align: center; display: flex; flex-direction: column; gap: 4px; }
+.stat-item { flex: 1; text-align: center; display: flex; flex-direction: column; gap: 4px; cursor: pointer; }
 .stat-item .val { font-size: 20px; font-weight: bold; }
 .stat-item .label { font-size: 12px; opacity: 0.8; }
 

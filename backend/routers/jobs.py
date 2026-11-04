@@ -1,4 +1,4 @@
-# backend/routers/jobs.py (岗位业务接口：全量完整版，包含带出面试时间地点)
+# backend/routers/jobs.py (岗位业务接口：全量完整版，包含流水与幂等)
 from fastapi import APIRouter, Depends, HTTPException, Header
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -6,7 +6,9 @@ from sqlalchemy import select, func
 from typing import Optional
 from datetime import datetime
 from database import get_db
-from models import Job, JobApplication, User, CooperationEntity, Notification, Review, Interview, ApplicationLog
+# 🚨 核心修复：补上了 PointTransaction 的导入
+from models import Job, JobApplication, User, CooperationEntity, Notification, Review, Interview, ApplicationLog, \
+    PointTransaction
 from core.security import get_current_user, get_optional_user, require_roles, apply_city_filter, verify_resource_city
 
 router = APIRouter(prefix="/api/jobs", tags=["jobs"])
@@ -57,7 +59,6 @@ async def get_jobs(
         current_user: User | None = Depends(get_optional_user)
 ):
     current_city = x_city_id or city_id or "410185"
-
     if current_city not in ['410185', '410173', '411300']:
         raise HTTPException(status_code=400, detail="当前城市暂未开放")
 
@@ -65,7 +66,6 @@ async def get_jobs(
         CooperationEntity.status == "active", Job.publish_status == "active")
 
     query = query.where(Job.city_id == current_city)
-
     if current_user and current_user.role in ["merchant", "provider", "city_ops", "city_gov", "city_admin"]:
         query = query.where(Job.city_id == current_user.city_id)
 
@@ -82,7 +82,6 @@ async def get_jobs(
             "id": job.id, "title": job.title, "salary": job.salary, "location": job.location,
             "job_type": job.job_type, "tags": job.tags, "created_at": job.created_at
         })
-
     return {"code": 0, "data": data, "total": total}
 
 
@@ -120,7 +119,6 @@ async def get_interview_count(
     return {"code": 0, "data": {"count": count}}
 
 
-# 🚨 修复：联表带出面试时间和地点
 @router.get("/my-applications")
 async def get_my_applications(
         db: AsyncSession = Depends(get_db),
@@ -336,6 +334,11 @@ async def confirm_finish(app_id: int, db: AsyncSession = Depends(get_db),
                          current_user: User = Depends(require_roles(["merchant", "provider"]))):
     app = await db.get(JobApplication, app_id)
     if not app: raise HTTPException(status_code=404, detail="记录不存在")
+
+    # 🚨 修复：防止重复确认
+    if app.status == 8:
+        return {"code": 0, "message": "订单已确认完工"}
+
     job = await db.get(Job, app.job_id)
     if not job or job.merchant_id != current_user.id:
         raise HTTPException(status_code=403, detail="越权拦截：无权操作该单据")
@@ -347,6 +350,13 @@ async def confirm_finish(app_id: int, db: AsyncSession = Depends(get_db),
     app.settled_points = reward_points
     worker = await db.get(User, app.worker_id)
     worker.total_points += reward_points
+
+    # 🚨 修复：写入积分流水
+    db.add(PointTransaction(
+        user_id=worker.id, amount=reward_points, balance_after=worker.total_points,
+        biz_type="order_settle", ref_no=f"settle_{app.id}", order_id=str(app.id),
+        remark=f"订单【{job.title}】完工结算"
+    ))
 
     db.add(Notification(user_id=app.worker_id, title="完工结单已确认",
                         content=f"企业已确认完工，{reward_points}积分已到账！"))
@@ -379,6 +389,12 @@ async def submit_review(req: ReviewReq, db: AsyncSession = Depends(get_db),
                         current_user: User = Depends(require_roles(["merchant", "provider"]))):
     app = await db.get(JobApplication, req.application_id)
     if not app: raise HTTPException(status_code=404, detail="记录不存在")
+
+    # 🚨 修复：防止重复评价
+    exist_review = await db.execute(select(Review).where(Review.application_id == req.application_id))
+    if exist_review.scalar_one_or_none():
+        return {"code": 0, "message": "已评价过"}
+
     db.add(Review(application_id=req.application_id, merchant_id=current_user.id, worker_id=app.worker_id,
                   rating=req.rating, comment=req.comment))
     await db.commit()

@@ -1,4 +1,4 @@
-<!-- frontend/src/views/merchant/MerchantTalentPool.vue (B端简历库：全面修复弹窗UI表单) -->
+<!-- frontend/src/views/merchant/MerchantTalentPool.vue (B端简历库：引入进度条) -->
 <template>
   <div class="talent-page">
     <div class="sticky-header">
@@ -68,6 +68,12 @@
         </div>
 
         <div class="modal-body">
+          <!-- 🚨 引入进度条 -->
+          <div class="resume-section">
+            <div class="sec-title">应聘进度</div>
+            <OrderTimeline :app="currentResume" />
+          </div>
+
           <div class="resume-section">
             <div class="sec-title">基础信息</div>
             <p><strong>姓名：</strong>{{ currentResume.resume_data?.basic?.name || currentResume.worker_name }}</p>
@@ -103,7 +109,7 @@
       </div>
     </div>
 
-    <!-- 🚨 修复：邀面试弹窗 -->
+    <!-- 邀面试弹窗 -->
     <div v-if="showInviteModal" class="modal-overlay" @click.self="showInviteModal = false">
       <div class="modal-box invite-modal">
         <h3>发起面试邀请</h3>
@@ -133,7 +139,7 @@
       </div>
     </div>
 
-    <!-- 🚨 修复：拒绝问卷 -->
+    <!-- 拒绝问卷 -->
     <div v-if="showRejectModal" class="modal-overlay" @click.self="showRejectModal = false">
       <div class="modal-box invite-modal">
         <h3>不合适原因</h3>
@@ -166,6 +172,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import api from '../../api'
+import OrderTimeline from '../../components/OrderTimeline.vue' // 🚨 引入组件
 
 const mainTab = ref('inbox')
 const allData = ref([])
@@ -236,6 +243,7 @@ onMounted(() => { loadData() })
 </script>
 
 <style scoped>
+/* 样式保持原样，由于进度条是横向的，在弹窗内展示刚好 */
 .talent-page { min-height: 100vh; background: #f0f2f5; }
 .sticky-header { position: sticky; top: 0; z-index: 99; background: #fff; padding: 16px; border-bottom: 1px solid #eee; }
 .sticky-header h2 { font-size: 18px; color: #1f2937; }
@@ -269,32 +277,18 @@ onMounted(() => { loadData() })
 .status-badge.danger { color: #ef4444; }
 .empty { text-align: center; padding: 60px 0; color: #9ca3af; }
 
-/* 🚨 统一弹窗基础样式 */
 .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6); z-index: 9999; display: flex; justify-content: center; align-items: center; }
 .modal-box { background: #fff; width: 90%; max-width: 400px; border-radius: 12px; padding: 20px; display: flex; flex-direction: column; max-height: 85vh; }
-
-/* 🚨 邀面试、拒绝弹窗（表单修复） */
 .invite-modal h3 { text-align: center; margin-bottom: 20px; font-size: 18px; }
 .form-group { margin-bottom: 16px; }
 .form-group label { display: block; font-size: 14px; font-weight: bold; color: #333; margin-bottom: 8px; }
-.form-group input, .form-group select, .form-group textarea {
-  width: 100%;
-  box-sizing: border-box;
-  padding: 12px;
-  border: 1px solid #e5e7eb;
-  border-radius: 6px;
-  font-size: 14px;
-  outline: none;
-  background: #f9fafb;
-  font-family: inherit;
-}
+.form-group input, .form-group select, .form-group textarea { width: 100%; box-sizing: border-box; padding: 12px; border: 1px solid #e5e7eb; border-radius: 6px; font-size: 14px; outline: none; background: #f9fafb; font-family: inherit; }
 .form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color: #2563eb; background: #fff; }
 .form-group textarea { resize: vertical; }
 .modal-btns { display: flex; gap: 12px; margin-top: 10px; }
 .modal-btns button { flex: 1; padding: 12px; border-radius: 6px; font-weight: bold; border: none; font-size: 15px; cursor: pointer; }
 .btn-cancel { background: #f3f4f6; color: #666; }
 
-/* 🚨 简历详情弹窗 */
 .archive-modal { padding: 0; }
 .modal-header { padding: 16px; border-bottom: 1px solid #e5e7eb; display: flex; justify-content: space-between; align-items: center; }
 .modal-header h3 { font-size: 16px; margin: 0; }

@@ -1,8 +1,8 @@
-# backend/routers/ads.py (广告业务接口：服务端短期 Token 校验、高频防刷降级)
+# backend/routers/ads.py (广告业务：强制写入积分流水)
 from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 from database import get_db, redis_client
-from models import User
+from models import User, PointTransaction
 from core.security import get_current_user_id
 from pydantic import BaseModel
 import uuid
@@ -13,8 +13,10 @@ router = APIRouter(prefix="/api/ads", tags=["ads"])
 REQUIRE_APP_SIGNATURE = os.environ.get("REQUIRE_APP_SIGNATURE", "true").lower() == "true"
 IS_STAGING = os.environ.get("ENV", "dev").lower() != "prod"
 
+
 class AdWatchReq(BaseModel):
     ad_token: str
+
 
 @router.post("/get-token")
 async def get_ad_token(request: Request, user_id: int = Depends(get_current_user_id)):
@@ -49,9 +51,10 @@ async def get_ad_token(request: Request, user_id: int = Depends(get_current_user
         await redis_client.set(f"ad_token:{token}", user_id, ex=300)
     except Exception:
         if IS_STAGING:
-             return {"code": 0, "data": {"ad_token": f"fallback_{user_id}"}}
+            return {"code": 0, "data": {"ad_token": f"fallback_{user_id}"}}
         raise HTTPException(status_code=500, detail="凭证存储失败")
     return {"code": 0, "data": {"ad_token": token}}
+
 
 @router.post("/watch-ad")
 async def watch_ad(req: AdWatchReq, db: AsyncSession = Depends(get_db), user_id: int = Depends(get_current_user_id)):
@@ -60,6 +63,12 @@ async def watch_ad(req: AdWatchReq, db: AsyncSession = Depends(get_db), user_id:
             raise HTTPException(status_code=400, detail="无效的广告凭证")
         user = await db.get(User, user_id)
         user.total_points += 5
+
+        # 🚨 修复：写入流水
+        db.add(PointTransaction(
+            user_id=user_id, amount=5, balance_after=user.total_points,
+            biz_type="ad_reward", ref_no=req.ad_token, remark="看广告奖励"
+        ))
         await db.commit()
         return {"code": 0, "message": "观看成功(降级)，积分+5", "current_points": user.total_points}
 
@@ -78,11 +87,21 @@ async def watch_ad(req: AdWatchReq, db: AsyncSession = Depends(get_db), user_id:
         if IS_STAGING:
             user = await db.get(User, user_id)
             user.total_points += 5
+            db.add(PointTransaction(
+                user_id=user_id, amount=5, balance_after=user.total_points,
+                biz_type="ad_reward", ref_no=req.ad_token, remark="看广告奖励(降级)"
+            ))
             await db.commit()
             return {"code": 0, "message": "观看成功(降级)，积分+5", "current_points": user.total_points}
         raise HTTPException(status_code=500, detail="防刷服务异常")
 
     user = await db.get(User, user_id)
     user.total_points += 5
+
+    # 🚨 修复：写入流水
+    db.add(PointTransaction(
+        user_id=user_id, amount=5, balance_after=user.total_points,
+        biz_type="ad_reward", ref_no=req.ad_token, remark="看广告奖励"
+    ))
     await db.commit()
     return {"code": 0, "message": "观看成功，积分+5", "current_points": user.total_points}
