@@ -1,7 +1,7 @@
-# backend/routers/user.py (用户业务接口：查询积分、扣减积分、简历维护)
+# backend/routers/user.py (用户业务接口：查询积分、扣减积分、多套简历维护)
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
-from typing import Optional
+from typing import Optional, List, Dict, Any
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import update
 from sqlalchemy.orm.attributes import flag_modified
@@ -13,16 +13,8 @@ router = APIRouter(prefix="/api/user", tags=["user"])
 
 
 class ResumeReq(BaseModel):
-    name: Optional[str] = ""
-    phone: Optional[str] = ""
-    email: Optional[str] = ""
-    target_job: Optional[str] = ""
-    target_city: Optional[str] = ""
-    skills: Optional[str] = ""
-    work_experience: Optional[str] = ""
-    project_experience: Optional[str] = ""
-    education: Optional[str] = ""
-    self_evaluation: Optional[str] = ""
+    basic: Dict[str, Any]  # 通用信息: name, phone, email, skills, education
+    jobs: List[Dict[str, Any]]  # 岗位专属简历列表: 包含 id, target_job, target_city, work_experience, self_evaluation
 
 
 @router.get("/points")
@@ -45,17 +37,22 @@ async def exchange_item(db: AsyncSession = Depends(get_db), user_id: int = Depen
     return {"code": 0, "message": "兑换成功，已生成提货码"}
 
 
-# 🚨 新增：获取简历
 @router.get("/resume")
 async def get_resume(db: AsyncSession = Depends(get_db), user_id: int = Depends(get_current_user_id)):
     user = await db.get(User, user_id)
     if not user:
         raise HTTPException(status_code=404, detail="用户不存在")
-    # 如果没填过，返回空字典，前端做兜底
-    return {"code": 0, "data": user.resume_data or {}}
+
+    # 结构兜底
+    resume_data = user.resume_data or {}
+    if "basic" not in resume_data:
+        resume_data["basic"] = {"name": "", "phone": "", "email": "", "skills": "", "education": ""}
+    if "jobs" not in resume_data:
+        resume_data["jobs"] = []
+
+    return {"code": 0, "data": resume_data}
 
 
-# 🚨 新增：保存/更新简历
 @router.put("/resume")
 async def save_resume(req: ResumeReq, db: AsyncSession = Depends(get_db), user_id: int = Depends(get_current_user_id)):
     user = await db.get(User, user_id)
@@ -63,6 +60,6 @@ async def save_resume(req: ResumeReq, db: AsyncSession = Depends(get_db), user_i
         raise HTTPException(status_code=404, detail="用户不存在")
 
     user.resume_data = req.dict()
-    flag_modified(user, "resume_data")  # 通知 SQLAlchemy JSONB 字段已变更
+    flag_modified(user, "resume_data")
     await db.commit()
     return {"code": 0, "message": "简历保存成功"}
