@@ -1,4 +1,4 @@
-# backend/main.py (FastAPI入口：安全加固、CORS白名单、严格健康检查)
+# backend/main.py (FastAPI入口：纯图床模式，无需本地静态挂载，保持完整)
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -8,7 +8,6 @@ import os
 
 from routers import auth, jobs, user, ads, upload, merchant, admin, audit, notifications
 
-
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     await init_models()
@@ -17,15 +16,12 @@ async def lifespan(app: FastAPI):
     yield
     shutdown_scheduler()
 
-
 app = FastAPI(lifespan=lifespan)
 
-# 🚨 1. CORS 白名单强校验
 ALLOW_ORIGINS_STR = os.environ.get("ALLOW_ORIGINS", "http://localhost:5173,http://127.0.0.1:5173")
 ALLOW_ORIGINS = [origin.strip() for origin in ALLOW_ORIGINS_STR.split(",")]
-
 if "*" in ALLOW_ORIGINS and os.environ.get("ENV") != "dev":
-    raise ValueError("🚨 致命错误：生产/Staging 环境 CORS 白名单不能配置为 '*'！")
+    raise ValueError("🚨 致命错误：CORS 白名单不能配置为 '*'！")
 
 app.add_middleware(
     CORSMiddleware,
@@ -35,30 +31,23 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# 管理端 IP 白名单
 ALLOWED_ADMIN_IPS = os.environ.get("ALLOWED_ADMIN_IPS", "127.0.0.1,::1").split(",")
 IS_STAGING = os.environ.get("ENV", "dev") != "prod"
-
 
 @app.middleware("http")
 async def admin_ip_whitelist_middleware(request: Request, call_next):
     path = request.url.path
     if path.startswith("/api/admin/") or path.startswith("/api/audit/"):
-        # 🚨 2. Staging 演示环境暂时关闭 IP 限制，防止 CloudBase 内网 IP 误拦截
         if IS_STAGING:
             return await call_next(request)
-
         client_ip = request.client.host
         if client_ip not in ALLOWED_ADMIN_IPS:
             return JSONResponse(status_code=403, content={"detail": "非法 IP 访问管理接口"})
-
     return await call_next(request)
-
 
 @app.get("/health")
 def health_check():
     return {"status": "ok", "env": os.environ.get("ENV", "dev")}
-
 
 app.include_router(notifications.router)
 app.include_router(auth.router)
