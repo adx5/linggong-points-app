@@ -1,4 +1,4 @@
-# backend/models.py (数据库表结构：全量业务表、角色池与全局配置)
+# backend/models.py (数据库表结构：包含简历字段与全局配置)
 from datetime import datetime
 from sqlalchemy import Column, Integer, String, Boolean, DateTime, ForeignKey, Text, Float, CheckConstraint, UniqueConstraint
 from sqlalchemy.dialects.postgresql import JSONB
@@ -25,8 +25,10 @@ class User(Base):
     total_points = Column(Integer, default=0)
     city_id = Column(String(10), index=True, nullable=True)
     token_version = Column(Integer, default=0, nullable=False)
-    role = Column(String(20), default="worker", index=True) # 当前激活角色
-    available_roles = Column(String(100), default="worker") # 拥有的角色池
+    role = Column(String(20), default="worker", index=True)
+    available_roles = Column(String(100), default="worker")
+    # 🚨 简历数据字段
+    resume_data = Column(JSONB, default={})
     created_at = Column(DateTime, default=datetime.utcnow)
 
 class CooperationEntity(Base):
