@@ -1,4 +1,4 @@
-<!-- frontend/src/views/worker/WorkerVerify.vue (C端实名认证：修复按钮被遮挡问题) -->
+<!-- frontend/src/views/worker/WorkerVerify.vue (C端实名认证：修复上传路径) -->
 <template>
   <div class="verify-page">
     <div class="sticky-header">
@@ -51,7 +51,6 @@
           <input type="file" ref="idBackInput" accept="image/*" style="display: none;" @change="handleFileChange($event, 'id_back_img')" />
         </div>
 
-        <!-- 🚨 修复：去掉 fixed 定位，让按钮紧跟在表单下方，并用 margin-top 隔开距离 -->
         <div class="submit-section">
           <button class="btn-submit" @click="submitVerify" :disabled="uploading">
             {{ uploading ? '提交中...' : '提交认证' }}
@@ -105,11 +104,13 @@ const handleFileChange = async (event, type) => {
     const formData = new FormData()
     formData.append('file', uploadFile)
 
-    const res = await api.post('/upload', formData, { headers: { 'Content-Type': 'multipart/form-data' } })
+    // 🚨 核心修复：路径必须是 /upload/verify
+    const res = await api.post('/upload/verify', formData, { headers: { 'Content-Type': 'multipart/form-data' } })
+
     form[type] = res.data.url
     window.$toast('上传成功')
   } catch (err) {
-    window.$toast('上传失败')
+    window.$toast(err.response?.data?.detail || '上传失败')
   } finally {
     uploading.value = false
     event.target.value = ''
@@ -142,12 +143,10 @@ const submitVerify = async () => {
 .btn-back { cursor: pointer; display: flex; align-items: center; margin-left: -8px; }
 .sticky-header h2 { font-size: 18px; color: #1f2937; font-weight: bold; }
 .content { padding: 16px; }
-
 .success-banner { display: flex; gap: 12px; padding: 20px; border-radius: 12px; background: #ecfdf5; color: #10b981; border: 1px solid #a7f3d0; }
 .success-banner .icon { font-size: 32px; }
 .success-banner .text h3 { font-size: 18px; font-weight: bold; margin-bottom: 8px; }
 .success-banner .text p { font-size: 14px; margin-bottom: 4px; }
-
 .form-box { background: #fff; border-radius: 12px; padding: 16px; }
 .tips-box { background: #eff6ff; color: #2563eb; font-size: 13px; padding: 12px; border-radius: 8px; margin-bottom: 20px; line-height: 1.5; }
 .form-item { margin-bottom: 20px; }
@@ -158,8 +157,6 @@ const submitVerify = async () => {
 .upload-box img { width: 100%; height: 100%; object-fit: contain; }
 .id-card-row { display: flex; gap: 12px; }
 .upload-box.small { flex: 1; height: 100px; }
-
-/* 🚨 修复：普通的按钮容器，不会被底部 TabBar 挡住 */
 .submit-section { margin-top: 30px; margin-bottom: 20px; }
 .btn-submit { width: 100%; background: #10b981; color: #fff; padding: 14px; border-radius: 8px; font-size: 16px; font-weight: bold; border: none; cursor: pointer; }
 .btn-submit:disabled { background: #a7f3d0; }
