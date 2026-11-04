@@ -1,13 +1,11 @@
-<!-- frontend/src/views/Login.vue (保留原UI：两步式登录，增强错误提示) -->
+<!-- frontend/src/views/Login.vue (保留原UI：两步式登录，修复 Hash 跳转) -->
 <template>
   <div class="login-page">
-    <!-- 顶部 Logo 区 -->
     <div class="logo-area" @click="handleSecretClick">
       <h1>XX零工市场</h1>
       <p>同城好工作 · 就在零工市场</p>
     </div>
 
-    <!-- ================= 第一步：只选角色 (隐藏输入框) ================= -->
     <div v-if="currentStep === 1" class="step-container fade-in">
       <div class="main-btns">
         <button class="btn-main" @click="selectRole('worker')">求职者登录</button>
@@ -16,33 +14,21 @@
       </div>
     </div>
 
-    <!-- ================= 第二步：只输手机号 (隐藏角色按钮) ================= -->
     <div v-if="currentStep === 2" class="step-container fade-in">
-      <!-- 顶部返回和当前角色提示 -->
       <div class="back-header">
         <span class="btn-back" @click="goBack">← 返回</span>
         <span class="current-role">{{ roleNameMap[selectedRole] }}</span>
         <span class="placeholder-right"></span>
       </div>
-
       <div class="input-group">
-        <input
-          type="tel"
-          v-model="phone"
-          placeholder="请输入您的手机号"
-          maxlength="11"
-          autofocus
-        />
+        <input type="tel" v-model="phone" placeholder="请输入您的手机号" maxlength="11" autofocus />
       </div>
-
       <button class="btn-main" @click="handleLogin" :disabled="loading">
         {{ loading ? '正在登录...' : '确认登录' }}
       </button>
-
       <p class="tips">未注册的手机号验证后将自动创建账号</p>
     </div>
 
-    <!-- 隐藏彩蛋区 -->
     <div class="bottom-roles" v-if="showAdminEntries">
       <span @click="goToAdmin('agent')">经纪人</span> |
       <span @click="goToAdmin('ops')">运营方</span> |
@@ -57,17 +43,12 @@ import api from '../api'
 import { useUserStore } from '../store/user'
 
 const userStore = useUserStore()
-
 const currentStep = ref(1)
 const selectedRole = ref('')
 const phone = ref('')
 const loading = ref(false)
 
-const roleNameMap = {
-  worker: '求职者登录',
-  merchant: '招聘方登录',
-  provider: '服务商登录'
-}
+const roleNameMap = { worker: '求职者登录', merchant: '招聘方登录', provider: '服务商登录' }
 
 const clickCount = ref(0)
 const showAdminEntries = ref(false)
@@ -98,41 +79,26 @@ const goBack = () => {
 }
 
 const handleLogin = async () => {
-  if (!phone.value || phone.value.length < 11) {
-    return window.$toast('请输入正确的 11 位手机号')
-  }
-
+  if (!phone.value || phone.value.length < 11) return window.$toast('请输入正确的 11 位手机号')
   loading.value = true
   try {
     const res = await api.post('/auth/login', { phone: phone.value, target_role: selectedRole.value })
     userStore.setLogin(res.data, selectedRole.value)
-
     window.$toast('登录成功')
 
     setTimeout(() => {
+      // 🚨 修复：使用 Hash 模式跳转
       if (selectedRole.value === 'worker') {
-        window.location.href = '/worker/home'
+        window.location.hash = '#/worker/home'
       } else if (selectedRole.value === 'merchant') {
-        window.location.href = '/merchant/dash'
+        window.location.hash = '#/merchant/dash'
       } else if (selectedRole.value === 'provider') {
         window.$toast('服务商工作台正在开发中，为您跳转至商家端')
-        window.location.href = '/merchant/dash'
+        window.location.hash = '#/merchant/dash'
       }
     }, 500)
   } catch (err) {
-    console.error('🔥 登录接口报错原始信息:', err)
-    // 增强的错误提取逻辑，如果有后端返回的具体 detail 就显示，否则显示网络错误
-    let errorMsg = '登录失败，请检查网络'
-    if (err.response?.data?.detail) {
-      if (Array.isArray(err.response.data.detail)) {
-        errorMsg = err.response.data.detail[0]?.msg || '参数校验失败'
-      } else {
-        errorMsg = err.response.data.detail
-      }
-    } else if (err.message === 'Network Error') {
-      errorMsg = '无法连接服务器，请检查后端是否启动'
-    }
-    window.$toast(errorMsg)
+    window.$toast(err.response?.data?.detail || '登录失败，请检查网络')
   } finally {
     loading.value = false
   }
@@ -142,21 +108,22 @@ const goToAdmin = (role) => {
   localStorage.setItem('token', 'admin-mock-token-xyz')
   localStorage.setItem('activeRole', role)
 
+  // 🚨 修复：使用 Hash 模式跳转
   if (role === 'ops') {
     window.$toast('正在进入平台运营后台...')
-    setTimeout(() => { window.location.href = '/admin/dash' }, 800)
+    setTimeout(() => { window.location.hash = '#/admin/dash' }, 800)
   } else if (role === 'gov') {
     window.$toast('正在进入合规监管后台...')
-    setTimeout(() => { window.location.href = '/admin/dash' }, 800)
+    setTimeout(() => { window.location.hash = '#/admin/dash' }, 800)
   } else if (role === 'agent') {
     window.$toast('正在跳转至经纪人资质审核...')
-    setTimeout(() => { window.location.href = '/admin/audit' }, 800)
+    setTimeout(() => { window.location.hash = '#/admin/audit' }, 800)
   }
 }
 </script>
 
 <style scoped>
-/* 保持原版样式不变 */
+/* 保留原有样式不变 */
 .login-page { min-height: 100vh; padding: 80px 30px; background: #fff; display: flex; flex-direction: column; }
 .logo-area { text-align: center; margin-bottom: 40px; cursor: pointer; user-select: none; }
 .logo-area h1 { font-size: 28px; color: #2563eb; font-weight: bold; margin-bottom: 10px; }

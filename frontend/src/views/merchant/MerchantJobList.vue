@@ -1,4 +1,4 @@
-<!-- (B端岗位管理列表：严格依靠认证状态分配Tab，含手动上架) -->
+<!-- frontend/src/views/merchant/MerchantJobList.vue (B端岗位管理：修复分类逻辑与上架按钮) -->
 <template>
   <div class="job-list-page">
     <div class="sticky-header">
@@ -14,12 +14,11 @@
     </div>
 
     <div class="list-content">
-      <!-- 🚨 草稿箱顶部提示（只有未认证时显示） -->
+      <!-- 提示条 -->
       <div v-if="currentTab === 'draft' && !isVerified" class="pending-tip">
         完成企业备案后，草稿箱中的岗位将自动解锁。
         <span @click="$router.push('/merchant/verify')" style="color:#2563eb; font-weight:bold; cursor:pointer;">去备案 ></span>
       </div>
-      <!-- 🚨 草稿箱顶部提示（已认证但未上架时显示） -->
       <div v-if="currentTab === 'draft' && isVerified" class="success-tip">
         ✅ 您的企业已认证通过，可点击下方【立即上架】按钮将岗位展示给求职者。
       </div>
@@ -29,7 +28,7 @@
         <div class="card-header">
           <h3>
             {{ item.title }}
-            <span v-if="currentTab === 'draft'" class="status-tag-pending">草稿</span>
+            <span v-if="item.publish_status === 'draft'" class="status-tag-pending">草稿</span>
           </h3>
           <span class="salary">{{ item.salary }}</span>
         </div>
@@ -39,7 +38,7 @@
             <span v-for="tag in (item.tags || '').split(',').filter(t=>t)" :key="tag">{{ tag }}</span>
           </div>
           <div class="time-refresh-row">
-            <span class="update-time">{{ currentTab === 'draft' ? '刚刚编辑' : '刚刚更新' }}</span>
+            <span class="update-time">{{ currentTab === 'draft' ? '未发布' : '刚刚更新' }}</span>
             <span v-if="currentTab === 'active'" class="btn-refresh-text" @click="refreshJob(item)">刷新</span>
           </div>
         </div>
@@ -52,26 +51,23 @@
           <div class="data-item"><span class="val text-green">0</span><span class="label">录用</span></div>
         </div>
 
-        <!-- 统一风格的底部操作区 -->
         <div class="card-actions">
           <button class="btn-share" v-if="currentTab === 'active'" @click="shareJob(item)">📤 生成海报</button>
 
           <div class="right-actions">
-            <!-- 🚨 如果是草稿，且企业已经认证了，出现发布按钮 -->
-            <button class="btn-gray text-green" v-if="currentTab === 'draft' && isVerified" @click.stop="publishJob(item)">立即上架</button>
+            <!-- 草稿箱内，企业已认证，显示上架按钮 -->
+            <button class="btn-gray text-green" v-if="item.publish_status === 'draft' && isVerified" @click.stop="publishJob(item)">立即上架</button>
 
-            <button class="btn-gray" v-if="currentTab === 'draft'">编辑</button>
-            <button class="btn-gray" v-else-if="currentTab === 'active'">编辑</button>
+            <button class="btn-gray" v-if="item.publish_status === 'draft'" @click="$router.push('/merchant/job-create')">编辑</button>
+            <button class="btn-gray" v-else-if="item.publish_status === 'active'" @click="$router.push('/merchant/job-create')">编辑</button>
 
-            <!-- 草稿箱里是删除，在招里是停招 -->
-            <button class="btn-gray text-red" v-if="currentTab === 'draft'" @click.stop="confirmDelete(item)">删除</button>
-            <button class="btn-gray text-blue" v-else-if="currentTab === 'active'">下架停招</button>
+            <button class="btn-gray text-red" v-if="item.publish_status === 'draft'" @click.stop="confirmDelete(item)">删除</button>
+            <button class="btn-gray text-blue" v-else-if="item.publish_status === 'active'">下架停招</button>
             <button class="btn-gray text-blue" v-else-if="currentTab === 'stopped'">重新上架</button>
           </div>
         </div>
       </div>
 
-      <!-- 空状态处理 -->
       <div v-if="filteredJobs.length === 0" class="empty-state">
         <div class="empty-icon">📭</div>
         <p v-if="currentTab === 'active'">暂无在招岗位，快去发布吧~</p>
@@ -95,22 +91,17 @@ const loadJobs = async () => {
     const res = await api.get('/jobs/my-list')
     rawJobs.value = res.data || []
     isVerified.value = res.is_verified
-
-    // 🚨 如果未认证，且当前停留在在招岗位，强制切回草稿箱
-    if (!isVerified.value && currentTab.value === 'active') {
-      currentTab.value = 'draft'
-    }
   } catch (err) {
     window.$toast('获取岗位失败')
   }
 }
 
-// 🚨 核心分配逻辑
+// 🚨 核心修复：严格根据岗位真实的 publish_status 分类
 const filteredJobs = computed(() => {
   return rawJobs.value.filter(job => {
-    if (currentTab.value === 'active') return isVerified.value
-    if (currentTab.value === 'draft') return !isVerified.value
-    if (currentTab.value === 'stopped') return false
+    if (currentTab.value === 'active') return job.publish_status === 'active'
+    if (currentTab.value === 'draft') return job.publish_status === 'draft'
+    if (currentTab.value === 'stopped') return job.publish_status === 'stopped'
     return false
   })
 })
@@ -120,8 +111,7 @@ const publishJob = async (item) => {
   try {
     const res = await api.put(`/jobs/${item.id}/publish`)
     window.$toast(res.message || '岗位已成功上架')
-    // 刷新列表，草稿会自动飞去“在招岗位”
-    loadJobs()
+    loadJobs() // 刷新列表，它会自动飞去“在招岗位”
   } catch (err) {
     window.$toast('上架失败，请确认企业是否已通过审核')
   }
@@ -149,8 +139,6 @@ onMounted(() => { loadJobs() })
 .tab.active { color: #2563eb; font-weight: bold; border-bottom: 2px solid #2563eb; }
 
 .list-content { padding: 16px; }
-
-/* 提示条 */
 .pending-tip { background: #fffbeb; color: #b45309; font-size: 13px; padding: 10px; border-radius: 6px; margin-bottom: 12px; border: 1px solid #fde68a; }
 .success-tip { background: #ecfdf5; color: #10b981; font-size: 13px; padding: 10px; border-radius: 6px; margin-bottom: 12px; border: 1px solid #a7f3d0; }
 
@@ -158,7 +146,6 @@ onMounted(() => { loadJobs() })
 .card-header { display: flex; justify-content: space-between; margin-bottom: 8px; align-items: flex-start; }
 .card-header h3 { font-size: 16px; color: #1f2937; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .salary { color: #ef4444; font-weight: bold; font-size: 15px; white-space: nowrap; }
-
 .status-tag-pending { font-size: 12px; background: #e5e7eb; color: #4b5563; padding: 2px 6px; border-radius: 4px; font-weight: normal; }
 
 .meta-info { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
@@ -181,7 +168,6 @@ onMounted(() => { loadJobs() })
 .btn-gray { background: #fff; color: #374151; border: 1px solid #d1d5db; padding: 8px 14px; border-radius: 6px; font-size: 13px; font-weight: bold; cursor: pointer; }
 .btn-gray.text-red { color: #ef4444; border-color: #fca5a5; }
 .btn-gray.text-blue { color: #2563eb; border-color: #bfdbfe; }
-/* 🚨 新增绿色上架按钮样式 */
 .btn-gray.text-green { color: #10b981; border-color: #a7f3d0; }
 .btn-gray.text-green:active { background: #ecfdf5; }
 

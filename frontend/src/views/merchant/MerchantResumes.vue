@@ -1,4 +1,4 @@
-<!-- (B端公共人才库：左右布局，支持点击看详情) -->
+<!-- frontend/src/views/merchant/MerchantResumes.vue (B端公共人才库：加入企业认证拦截，修复红线漏洞) -->
 <template>
   <div class="talent-page">
     <div class="header">
@@ -13,7 +13,6 @@
     </div>
 
     <div class="list">
-      <!-- 🚨 加上点击查看详情 -->
       <div class="card" v-for="item in talents" :key="item.id" @click="openDetail(item)">
         <div class="info-left">
           <div class="user-title">
@@ -44,7 +43,7 @@
       </div>
     </div>
 
-    <!-- 🚨 详情弹窗 -->
+    <!-- 详情弹窗 -->
     <div v-if="showDetail" class="modal-overlay" @click.self="showDetail = false">
       <div class="modal-content">
         <h3>人才详情</h3>
@@ -65,7 +64,8 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
+import api from '../../api'
 
 const keyword = ref('')
 const filters = ['附近优先', '普工', '叉车工', '保安', '保洁', '日结']
@@ -77,29 +77,52 @@ const talents = ref([
 
 const showDetail = ref(false)
 const currentResume = ref({})
+const isVerified = ref(false)
 
-// 🚨 点击卡片打开详情
+// 🚨 核心修复：页面加载时校验企业是否已实名认证
+onMounted(async () => {
+  try {
+    const res = await api.get('/merchant/info')
+    if (res.data && res.data.status === 'active') {
+      isVerified.value = true
+    }
+  } catch (err) {
+    console.error('获取企业状态失败，可能是未登录或未备案')
+  }
+})
+
 const openDetail = (item) => {
   currentResume.value = item
   showDetail.value = true
 }
 
 const search = () => window.$toast('正在搜索：' + keyword.value)
+
 const toggleFavorite = (item) => {
+  // 🚨 拦截：未认证企业禁止收藏
+  if (!isVerified.value) {
+    return window.$toast('请先完成企业备案认证')
+  }
   item.is_favorite = !item.is_favorite
   window.$toast(item.is_favorite ? '已存入企业简历库' : '已从简历库移除')
 }
-const handleCall = (item) => window.$toast('正在拨打...')
+
+const handleCall = (item) => {
+  // 🚨 拦截：未认证企业禁止拨打电话
+  if (!isVerified.value) {
+    return window.$toast('您的企业尚未通过备案，无法查看联系方式或拨打电话')
+  }
+  window.$toast('正在拨打...')
+}
 </script>
 
 <style scoped>
-/* 基础样式 */
 .talent-page { min-height: 100vh; background: #f0f2f5; }
 .header { background: #fff; padding: 16px; border-bottom: 1px solid #eee; position: sticky; top: 0; z-index: 99; }
 .header h2 { font-size: 18px; color: #1f2937; margin-bottom: 12px; }
 .search-bar { display: flex; margin-bottom: 10px; }
 .search-bar input { flex: 1; padding: 10px 12px; border: 1px solid #e5e7eb; border-radius: 6px 0 0 6px; font-size: 14px; outline: none; background: #f9fafb; }
-.search-bar button { background: #2563eb; color: #fff; padding: 0 20px; border-radius: 0 6px 6px 0; border: none; font-weight: bold; }
+.search-bar button { background: #2563eb; color: #fff; padding: 0 20px; border-radius: 0 6px 6px 0; border: none; font-weight: bold; cursor: pointer; }
 .filter-tags { display: flex; overflow-x: auto; gap: 8px; padding-bottom: 4px; }
 .filter-tags::-webkit-scrollbar { display: none; }
 .filter-tags span { white-space: nowrap; font-size: 12px; color: #666; background: #f3f4f6; padding: 4px 10px; border-radius: 12px; cursor: pointer; }

@@ -1,8 +1,7 @@
-<!-- (Admin个人中心：动态身份) -->
+<!-- frontend/src/views/admin/AdminMine.vue (Admin个人中心：修复退出登录) -->
 <template>
   <div class="admin-mine">
     <div class="header">
-      <!-- 🚨 动态头像文字 -->
       <div class="avatar">{{ isGov ? '监' : '运' }}</div>
       <div class="info">
         <h3>{{ currentRole.title }}</h3>
@@ -24,11 +23,8 @@
 
 <script setup>
 import { ref, computed } from 'vue'
-import { useRouter } from 'vue-router'
 
-const router = useRouter()
 const role = ref(localStorage.getItem('activeRole') || 'ops')
-
 const isGov = computed(() => role.value === 'gov')
 
 const currentRole = computed(() => {
@@ -38,7 +34,12 @@ const currentRole = computed(() => {
   return { title: '平台运营专员', sub: '平台业务与日常管理' }
 })
 
-const logout = () => { localStorage.clear(); window.location.href = '/login' }
+const logout = () => {
+  localStorage.clear();
+  // 🚨 修复：使用 Hash 模式跳转
+  window.location.hash = '#/login';
+  window.location.reload();
+}
 </script>
 
 <style scoped>

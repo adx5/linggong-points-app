@@ -1,9 +1,11 @@
-// frontend/src/api/index.js (Axios封装：游客自动注入默认城市)
+// frontend/src/api/index.js (Axios封装：修复 Hash 模式下 401 跳转 404 的问题)
 import axios from 'axios'
 import router from '../router'
 
+const baseURL = import.meta.env.VITE_API_BASE_URL || '/api'
+
 const api = axios.create({
-  baseURL: '/api',
+  baseURL: baseURL,
   timeout: 10000
 })
 
@@ -13,7 +15,6 @@ api.interceptors.request.use(config => {
     config.headers.Authorization = `Bearer ${token}`
   }
 
-  // 🚨 核心修复：游客和 C 端请求，如果没有城市，自动注入默认城市(登封 410185)
   if (!config.headers['X-City-Id']) {
     const guestCity = localStorage.getItem('guest_city_id') || '410185'
     config.headers['X-City-Id'] = guestCity
@@ -45,7 +46,9 @@ api.interceptors.response.use(
           if (window.$toast) window.$toast('登录状态已失效')
           localStorage.clear()
           if (router.currentRoute.value.path !== '/login') {
-            window.location.href = '/login'
+            // 🚨 核心修复：强制使用 Hash 路由刷新
+            window.location.hash = '#/login';
+            window.location.reload();
           }
         } else {
           console.warn('游客浏览受限接口，已拦截重定向')

@@ -1,4 +1,4 @@
-<!-- (B端我的企业：完美的2x4八宫格布局，带简历/面试红点) -->
+<!-- frontend/src/views/merchant/MerchantMine.vue (B端我的企业：修复退出登录) -->
 <template>
   <div class="mine-page">
     <div class="header">
@@ -46,7 +46,6 @@
         <span class="badge" v-if="unreadCount > 0">{{ unreadCount }}</span>
       </div>
 
-      <!-- 🚨 面试管理加红点 -->
       <div class="grid-item" @click="$router.push('/merchant/interviews')">
         <div class="icon-wrap" style="background:#e0f2fe; color:#0ea5e9;">📅</div>
         <span>面试管理</span>
@@ -79,7 +78,7 @@ const companyName = ref('加载中...')
 const rejectReason = ref('')
 const unreadCount = ref(0)
 const resumeCount = ref(0)
-const interviewCount = ref(0) // 🚨 面试红点
+const interviewCount = ref(0)
 
 onMounted(async () => {
   try {
@@ -101,14 +100,18 @@ onMounted(async () => {
     resumeCount.value = resumeRes.data.count
   } catch (err) {}
 
-  // 🚨 拉取面试红点
   try {
     const interviewRes = await api.get('/jobs/interview-count')
     interviewCount.value = interviewRes.data.count
   } catch (err) {}
 })
 
-const logout = () => { localStorage.clear(); window.location.href = '/login' }
+const logout = () => {
+  localStorage.clear()
+  // 🚨 修复：使用 Hash 模式跳转
+  window.location.hash = '#/login'
+  window.location.reload()
+}
 </script>
 
 <style scoped>

@@ -1,10 +1,9 @@
-// frontend/src/router/index.js (路由配置：修复根路由重定向，放行游客)
-import { createRouter, createWebHistory } from 'vue-router'
+// frontend/src/router/index.js (路由配置：Hash模式，包含简历路由)
+import { createRouter, createWebHashHistory } from 'vue-router'
 
 const router = createRouter({
-  history: createWebHistory(),
+  history: createWebHashHistory(),
   routes: [
-    // 🚨 修复点 1：默认重定向到求职者首页（现在游客也能看）
     { path: '/', redirect: '/worker/home' },
     { path: '/login', component: () => import('../views/Login.vue') },
 
@@ -19,11 +18,12 @@ const router = createRouter({
         { path: 'short-term', component: () => import('../views/worker/WorkerShortTerm.vue') },
         { path: 'find', component: () => import('../views/worker/WorkerFind.vue') },
         { path: 'job-detail/:id', component: () => import('../views/worker/JobDetail.vue') },
-        // 以下页面必须登录
         { path: 'my-applies', component: () => import('../views/worker/WorkerMyApplies.vue'), meta: { requireAuth: true } },
         { path: 'task', component: () => import('../views/worker/WorkerTask.vue'), meta: { requireAuth: true } },
         { path: 'exchange', component: () => import('../views/worker/WorkerExchange.vue'), meta: { requireAuth: true } },
-        { path: 'mine', component: () => import('../views/worker/WorkerMine.vue'), meta: { requireAuth: true } }
+        { path: 'mine', component: () => import('../views/worker/WorkerMine.vue'), meta: { requireAuth: true } },
+        // 🚨 新增简历路由
+        { path: 'resume', component: () => import('../views/worker/WorkerResume.vue'), meta: { requireAuth: true } }
       ]
     },
 
@@ -72,27 +72,23 @@ router.beforeEach((to, from, next) => {
 
   if (to.path === '/login') return next()
 
-  // 判断该页面是否强制要求登录
   const requireAuth = to.matched.some(record => record.meta.requireAuth)
 
-  // 如果没 Token 且要求登录，拦截
   if (!token && requireAuth) {
     if (window.$toast) window.$toast('请先登录')
-    window.location.href = '/login'
+    window.location.hash = '#/login'
     return
   }
 
-  // 如果有 Token，校验角色
   if (token) {
     const requiredRole = to.matched.find(record => record.meta.role)?.meta.role
     if (requiredRole && requiredRole !== activeRole) {
       if (window.$toast) window.$toast('身份不匹配，正在返回登录页...')
       localStorage.clear()
-      setTimeout(() => { window.location.href = '/login' }, 1000)
+      setTimeout(() => { window.location.hash = '#/login' }, 1000)
       return
     }
   }
-
   next()
 })
 

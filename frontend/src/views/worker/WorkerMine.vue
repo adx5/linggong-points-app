@@ -1,7 +1,6 @@
-<!-- (C端个人中心：包含完整工作台，无快捷切换身份入口) -->
+<!-- frontend/src/views/worker/WorkerMine.vue (C端个人中心：已接入简历跳转) -->
 <template>
   <div class="mine-page">
-    <!-- 顶部用户信息 -->
     <div class="header">
       <div class="user-info">
         <div class="avatar">打</div>
@@ -22,7 +21,6 @@
       </div>
     </div>
 
-    <!-- 功能九宫格 -->
     <div class="grid-menu">
       <div class="grid-item" @click="$router.push('/worker/my-applies')">
         <div class="icon-wrap" style="background:#eff6ff; color:#2563eb;">📋</div>
@@ -44,7 +42,8 @@
         <div class="icon-wrap" style="background:#f3e8ff; color:#8b5cf6;">👥</div>
         <span>零工人脉</span>
       </div>
-      <div class="grid-item">
+      <!-- 🚨 确认入口 -->
+      <div class="grid-item" @click="$router.push('/worker/resume')">
         <div class="icon-wrap" style="background:#e0f2fe; color:#0ea5e9;">📝</div>
         <span>简历维护</span>
       </div>
@@ -58,7 +57,6 @@
       </div>
     </div>
 
-    <!-- 底部操作区：只保留退出登录 -->
     <div class="action-area">
       <button class="btn-logout" @click="logout">退出登录 / 切换身份</button>
     </div>
@@ -82,7 +80,8 @@ onMounted(async () => {
 
 const logout = () => {
   localStorage.clear()
-  router.replace('/login')
+  window.location.hash = '#/login'
+  window.location.reload()
 }
 </script>
 
@@ -104,5 +103,5 @@ const logout = () => {
 .icon-wrap { width: 44px; height: 44px; border-radius: 12px; display: flex; justify-content: center; align-items: center; font-size: 20px; }
 
 .action-area { padding: 0 16px; margin-top: 30px; }
-.btn-logout { width: 100%; background: #fff; color: #ef4444; padding: 15px; border-radius: 8px; font-weight: bold; font-size: 15px; border: 1px solid #eee; }
+.btn-logout { width: 100%; background: #fff; color: #ef4444; padding: 15px; border-radius: 8px; font-weight: bold; font-size: 15px; border: 1px solid #eee; cursor: pointer; }
 </style>

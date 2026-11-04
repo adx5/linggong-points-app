@@ -1,4 +1,4 @@
-<!-- (B端设置中心：低频操作收口) -->
+<!-- frontend/src/views/merchant/MerchantSettings.vue (B端设置中心：修复退出登录) -->
 <template>
   <div class="settings-page">
     <div class="sticky-header">
@@ -24,7 +24,6 @@
       </div>
     </div>
 
-    <!-- 退出按钮 -->
     <div class="action-area">
       <span class="btn-logout-text" @click="logout">退出登录 / 切换身份</span>
     </div>
@@ -35,15 +34,15 @@
 import { useRouter } from 'vue-router'
 const router = useRouter()
 
-// 🚨 统一处理点击事件
 const handleClick = (title) => {
   window.$toast(`【${title}】功能即将开放，敬请期待`)
 }
 
 const logout = () => {
   localStorage.clear()
-  // 🚨 必须用 href 强制跳转，不能用 router.replace
-  window.location.href = '/login'
+  // 🚨 修复：使用 Hash 模式跳转
+  window.location.hash = '#/login'
+  window.location.reload()
 }
 </script>
 
