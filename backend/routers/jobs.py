@@ -1,5 +1,5 @@
-# backend/routers/jobs.py (岗位业务接口：适配游客白名单，修复路由声明报错)
-from fastapi import APIRouter, Depends, HTTPException
+# backend/routers/jobs.py (岗位业务接口：全量完整版，包含带出面试时间地点)
+from fastapi import APIRouter, Depends, HTTPException, Header
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
@@ -7,11 +7,8 @@ from typing import Optional
 from datetime import datetime
 from database import get_db
 from models import Job, JobApplication, User, CooperationEntity, Notification, Review, Interview, ApplicationLog
-from fastapi import APIRouter, Depends, HTTPException, Header  # 🚨 引入 Header
 from core.security import get_current_user, get_optional_user, require_roles, apply_city_filter, verify_resource_city
 
-
-# 🚨 核心修复：确保路由对象在最顶部被正确初始化
 router = APIRouter(prefix="/api/jobs", tags=["jobs"])
 
 
@@ -39,13 +36,13 @@ class InviteReq(BaseModel):
     method: Optional[str] = "线下"
 
 
+class ApplyReq(BaseModel):
+    resume_id: Optional[str] = None
+
+
 # ==========================================
-# 第一部分：静态路径（包含游客白名单）
+# 第一部分：静态路径
 # ==========================================
-
-
-
-# ... (其他代码不变) ...
 
 @router.get("/list")
 async def get_jobs(
@@ -53,13 +50,12 @@ async def get_jobs(
         filter_tag: Optional[str] = None,
         keyword: Optional[str] = None,
         city_id: Optional[str] = None,
-        x_city_id: Optional[str] = Header(None),  # 🚨 新增：接收前端拦截器传来的 Header
+        x_city_id: Optional[str] = Header(None),
         page: int = 1,
         size: int = 10,
         db: AsyncSession = Depends(get_db),
         current_user: User | None = Depends(get_optional_user)
 ):
-    # 🚨 修复城市获取逻辑：优先用 Header，其次 Query，最后默认登封
     current_city = x_city_id or city_id or "410185"
 
     if current_city not in ['410185', '410173', '411300']:
@@ -68,10 +64,8 @@ async def get_jobs(
     query = select(Job).join(CooperationEntity, Job.merchant_id == CooperationEntity.user_id).where(
         CooperationEntity.status == "active", Job.publish_status == "active")
 
-    # 城市隔离过滤
     query = query.where(Job.city_id == current_city)
 
-    # B端/管理端强限制
     if current_user and current_user.role in ["merchant", "provider", "city_ops", "city_gov", "city_admin"]:
         query = query.where(Job.city_id == current_user.city_id)
 
@@ -126,23 +120,32 @@ async def get_interview_count(
     return {"code": 0, "data": {"count": count}}
 
 
+# 🚨 修复：联表带出面试时间和地点
 @router.get("/my-applications")
 async def get_my_applications(
         db: AsyncSession = Depends(get_db),
         current_user: User = Depends(require_roles(["worker", "hq_ops"]))
 ):
-    query = select(JobApplication, Job.id, Job.title, Job.salary, Job.location).join(Job,
-                                                                                     JobApplication.job_id == Job.id).where(
-        JobApplication.worker_id == current_user.id).order_by(JobApplication.id.desc())
+    query = select(
+        JobApplication, Job.id, Job.title, Job.salary, Job.location,
+        Interview.interview_time, Interview.interview_address
+    ).join(Job, JobApplication.job_id == Job.id).outerjoin(
+        Interview, (Interview.job_id == JobApplication.job_id) & (Interview.worker_id == JobApplication.worker_id)
+    ).where(
+        JobApplication.worker_id == current_user.id
+    ).order_by(JobApplication.id.desc())
+
     result = await db.execute(query)
     data = []
-    for app, job_id, title, salary, location in result.all():
+    for app, job_id, title, salary, location, int_time, int_addr in result.all():
         status_map = {1: "待处理", 2: "待面试", 3: "面试已同意", 4: "面试已拒绝", 5: "已录用", 6: "不合适",
                       7: "申请结单中", 8: "已完工", 9: "结单争议", 10: "已失效"}
         data.append({
             "id": app.id, "job_id": job_id, "title": title, "salary": salary, "location": location,
             "status": status_map.get(app.status), "reject_reason": app.reject_reason,
             "settled_points": app.settled_points,
+            "interview_time": int_time,
+            "interview_address": int_addr,
             "created_at": app.created_at.strftime("%m-%d %H:%M") if app.created_at else "",
             "invite_time": app.invite_time.strftime("%m-%d %H:%M") if app.invite_time else "",
             "interview_confirm_time": app.interview_confirm_time.strftime(
@@ -158,16 +161,20 @@ async def get_received(
         db: AsyncSession = Depends(get_db),
         current_user: User = Depends(require_roles(["merchant", "provider"]))
 ):
-    query = select(JobApplication, Job.title, Job.salary, Job.location, User.phone, User.nickname).join(Job,
-                                                                                                        JobApplication.job_id == Job.id).join(
-        User, JobApplication.worker_id == User.id).where(Job.merchant_id == current_user.id).order_by(
-        JobApplication.id.desc())
+    query = select(
+        JobApplication, Job.title, Job.salary, Job.location,
+        User.phone, User.nickname, User.resume_data
+    ).join(Job, JobApplication.job_id == Job.id).join(
+        User, JobApplication.worker_id == User.id
+    ).where(Job.merchant_id == current_user.id).order_by(JobApplication.id.desc())
+
     result = await db.execute(query)
     data = []
-    for app, title, salary, location, phone, nickname in result.all():
+    for app, title, salary, location, phone, nickname, resume_data in result.all():
         data.append({
             "id": app.id, "job_title": title, "salary": salary, "location": location,
             "worker_name": nickname, "worker_phone": phone, "status": app.status,
+            "resume_data": resume_data or {},
             "created_at": app.created_at.strftime("%m-%d %H:%M") if app.created_at else "",
             "invite_time": app.invite_time.strftime("%m-%d %H:%M") if app.invite_time else "",
             "interview_confirm_time": app.interview_confirm_time.strftime(
@@ -215,6 +222,36 @@ async def create_job(req: JobCreateReq, db: AsyncSession = Depends(get_db),
 # 第二部分：动态路由
 # ==========================================
 
+@router.post("/apply/{job_id:int}")
+async def apply_job(
+        job_id: int,
+        req: ApplyReq = None,
+        db: AsyncSession = Depends(get_db),
+        current_user: User = Depends(require_roles(["worker"]))
+):
+    try:
+        exist = await db.execute(
+            select(JobApplication).where(JobApplication.job_id == job_id, JobApplication.worker_id == current_user.id))
+        if exist.scalar_one_or_none():
+            raise HTTPException(status_code=400, detail="您已投递过该岗位，请勿重复投递")
+
+        new_app = JobApplication(job_id=job_id, worker_id=current_user.id, city_id=current_user.city_id)
+        db.add(new_app)
+        await db.flush()
+
+        resume_info = f"，使用简历: {req.resume_id}" if req and req.resume_id else ""
+        db.add(ApplicationLog(application_id=new_app.id, operator_type="worker", action="投递简历", detail=resume_info))
+        await db.commit()
+        return {"code": 0, "message": "投递成功"}
+    except HTTPException as http_ex:
+        raise http_ex
+    except Exception as e:
+        print(f"🚨 投递接口崩溃报错: {str(e)}")
+        if "duplicate key" in str(e).lower() or "unique" in str(e).lower():
+            raise HTTPException(status_code=400, detail="您已投递过该岗位，请勿重复投递")
+        raise HTTPException(status_code=500, detail="平台服务器开小差了，请稍后重试")
+
+
 @router.get("/{job_id:int}")
 async def get_job_detail(
         job_id: int,
@@ -254,6 +291,7 @@ async def publish_draft_job(job_id: int, db: AsyncSession = Depends(get_db),
     if not entity or entity.status != "active": raise HTTPException(status_code=403, detail="企业未认证")
     job = await db.get(Job, job_id)
     if not job or job.merchant_id != current_user.id: raise HTTPException(status_code=404, detail="岗位不存在")
+
     verify_resource_city(job.city_id, current_user)
     job.publish_status = "active"
     await db.commit()

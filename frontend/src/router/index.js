@@ -1,4 +1,4 @@
-// frontend/src/router/index.js (路由配置：Hash模式，包含简历路由)
+// frontend/src/router/index.js (路由配置：包含实名认证)
 import { createRouter, createWebHashHistory } from 'vue-router'
 
 const router = createRouter({
@@ -7,7 +7,7 @@ const router = createRouter({
     { path: '/', redirect: '/worker/home' },
     { path: '/login', component: () => import('../views/Login.vue') },
 
-    // ================= C端 (求职者) =================
+    // ================= C端 =================
     {
       path: '/worker',
       component: () => import('../layout/WorkerLayout.vue'),
@@ -22,12 +22,12 @@ const router = createRouter({
         { path: 'task', component: () => import('../views/worker/WorkerTask.vue'), meta: { requireAuth: true } },
         { path: 'exchange', component: () => import('../views/worker/WorkerExchange.vue'), meta: { requireAuth: true } },
         { path: 'mine', component: () => import('../views/worker/WorkerMine.vue'), meta: { requireAuth: true } },
-        // 🚨 新增简历路由
-        { path: 'resume', component: () => import('../views/worker/WorkerResume.vue'), meta: { requireAuth: true } }
+        { path: 'resume', component: () => import('../views/worker/WorkerResume.vue'), meta: { requireAuth: true } },
+        { path: 'verify', component: () => import('../views/worker/WorkerVerify.vue'), meta: { requireAuth: true } }
       ]
     },
 
-    // ================= B端 (企业/招聘方) =================
+    // ================= B端 =================
     {
       path: '/merchant',
       component: () => import('../layout/MerchantLayout.vue'),
@@ -65,7 +65,6 @@ const router = createRouter({
   ]
 })
 
-// ================= 全局路由守卫 =================
 router.beforeEach((to, from, next) => {
   const token = localStorage.getItem('token')
   const activeRole = localStorage.getItem('activeRole')

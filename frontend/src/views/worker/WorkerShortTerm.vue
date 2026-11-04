@@ -1,4 +1,4 @@
-<!-- (C端短期灵活：左右布局，支持点击跳转) -->
+<!-- frontend/src/views/worker/WorkerShortTerm.vue (C端短期灵活：统一跳转详情页投递) -->
 <template>
   <div class="list-page">
     <div class="category-bar">
@@ -9,7 +9,6 @@
     </div>
 
     <div class="job-list">
-      <!-- 🚨 加上点击跳转 -->
       <div class="card" v-for="job in jobs" :key="job.id" @click="goToDetail(job.id)">
         <div class="info-left">
           <h3>{{ job.title }}</h3>
@@ -19,6 +18,7 @@
 
         <div class="action-right">
           <div class="price">{{ job.salary }}</div>
+          <!-- 🚨 修复：点击投递不再直接发请求，而是跳转到详情页统一走选简历流程 -->
           <button class="btn-apply" @click.stop="apply(job.id)">投递</button>
         </div>
       </div>
@@ -33,7 +33,7 @@ import { useRouter } from 'vue-router'
 import api from '../../api'
 import AppIcon from '../../components/AppIcon.vue'
 
-const router = useRouter() // 🚨 引入路由
+const router = useRouter()
 const categories = [
   { tag: '日结周结', iconName: 'rijie' }, { tag: '外卖快递', iconName: 'waimei' },
   { tag: '活动促销', iconName: 'huodong' }, { tag: '分拣搬运', iconName: 'fenjian' },
@@ -60,16 +60,20 @@ const goToDetail = (id) => {
   router.push(`/worker/job-detail/${id}`)
 }
 
-const apply = async (id) => {
-  try { window.$toast((await api.post(`/jobs/apply/${id}`)).message) }
-  catch (err) { window.$toast(err.response?.data?.detail || '投递失败') }
+// 🚨 核心修复：列表页的投递按钮直接引导去详情页
+const apply = (id) => {
+  if (!localStorage.getItem('token')) {
+    window.$toast('请先登录')
+    window.location.hash = '#/login'
+    return
+  }
+  router.push(`/worker/job-detail/${id}`)
 }
 
 onMounted(() => { loadJobs() })
 </script>
 
 <style scoped>
-/* 样式同上 */
 .list-page { min-height: 100vh; background: #f5f6f8; }
 .category-bar { display: flex; align-items: flex-end; background: #fff; padding: 12px 18px; border-bottom: 1px solid #eee; position: sticky; top: 0; z-index: 99; box-shadow: 0 2px 6px rgba(0,0,0,0.03); }
 .cat-card { flex: 1; margin: 0 3px; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 8px 0; background: #f5f6f8; border-radius: 6px; cursor: pointer; transition: all 0.3s; }

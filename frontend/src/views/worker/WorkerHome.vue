@@ -1,4 +1,4 @@
-<!-- (C端首页：顶部广告位Banner + 最新热招) -->
+<!-- frontend/src/views/worker/WorkerHome.vue (C端首页：统一跳转详情页投递) -->
 <template>
   <div class="home-page">
     <div class="header">
@@ -23,14 +23,13 @@
         <span @click="$router.push('/worker/find')">更多 ></span>
       </div>
       <div class="job-list">
-        <!-- 🚨 点击卡片跳转详情 -->
         <div class="job-card" v-for="job in jobs" :key="job.id" @click="goToDetail(job.id)">
           <div class="row">
             <h4>{{ job.title }}</h4>
             <span class="price">{{ job.salary }}</span>
           </div>
           <p class="loc">📍 {{ job.location }}</p>
-          <!-- 阻止冒泡，防止点投递时跳详情 -->
+          <!-- 🚨 修复：点击投递跳转详情页 -->
           <button class="btn-apply" @click.stop="apply(job.id)">在线投递</button>
         </div>
       </div>
@@ -59,12 +58,14 @@ const goToDetail = (id) => {
   router.push(`/worker/job-detail/${id}`)
 }
 
-const apply = async (id) => {
-  try {
-    window.$toast((await api.post(`/jobs/apply/${id}`)).message)
-  } catch (err) {
-    window.$toast(err.response?.data?.detail || '投递失败')
+const apply = (id) => {
+  if (!localStorage.getItem('token')) {
+    window.$toast('请先登录')
+    window.location.hash = '#/login'
+    return
   }
+  window.$toast('请在详情页选择简历并投递')
+  router.push(`/worker/job-detail/${id}`)
 }
 
 onMounted(() => { loadJobs() })
@@ -83,7 +84,7 @@ onMounted(() => { loadJobs() })
 .section-title { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
 .section-title h3 { font-size: 16px; }
 .section-title span { font-size: 12px; color: #999; }
-.job-card { background: #fff; border-radius: 8px; padding: 15px; margin-bottom: 12px; }
+.job-card { background: #fff; border-radius: 8px; padding: 15px; margin-bottom: 12px; cursor: pointer; }
 .row { display: flex; justify-content: space-between; margin-bottom: 8px; }
 .price { color: #ef4444; font-weight: bold; }
 .loc { font-size: 12px; color: #666; margin-bottom: 12px; }

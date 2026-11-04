@@ -1,4 +1,4 @@
-<!-- frontend/src/views/worker/WorkerMine.vue (C端个人中心：已接入简历跳转) -->
+<!-- frontend/src/views/worker/WorkerMine.vue (C端个人中心：增加实名认证入口) -->
 <template>
   <div class="mine-page">
     <div class="header">
@@ -42,14 +42,14 @@
         <div class="icon-wrap" style="background:#f3e8ff; color:#8b5cf6;">👥</div>
         <span>零工人脉</span>
       </div>
-      <!-- 🚨 确认入口 -->
       <div class="grid-item" @click="$router.push('/worker/resume')">
         <div class="icon-wrap" style="background:#e0f2fe; color:#0ea5e9;">📝</div>
         <span>简历维护</span>
       </div>
-      <div class="grid-item">
-        <div class="icon-wrap" style="background:#fee2e2; color:#ef4444;">🔧</div>
-        <span>我的工单</span>
+      <!-- 🚨 实名认证入口 -->
+      <div class="grid-item" @click="$router.push('/worker/verify')">
+        <div class="icon-wrap" style="background:#ecfdf5; color:#10b981;">🛡️</div>
+        <span>实名认证</span>
       </div>
       <div class="grid-item">
         <div class="icon-wrap" style="background:#f1f5f9; color:#64748b;">🎧</div>

@@ -1,11 +1,10 @@
-<!-- (B端简历库：收到简历 极简待办 + 全部简历 台账) -->
+<!-- frontend/src/views/merchant/MerchantTalentPool.vue (B端简历库：全面修复弹窗UI表单) -->
 <template>
   <div class="talent-page">
     <div class="sticky-header">
       <h2>简历库</h2>
     </div>
 
-    <!-- 顶部一级 Tab -->
     <div class="main-tabs">
       <div class="m-tab" :class="{ active: mainTab === 'inbox' }" @click="mainTab = 'inbox'">
         收到简历 <span class="badge" v-if="inboxCount > 0">{{ inboxCount }}</span>
@@ -13,12 +12,11 @@
       <div class="m-tab" :class="{ active: mainTab === 'all' }" @click="mainTab = 'all'">全部简历</div>
     </div>
 
-    <!-- Tab 1：收到简历 (极简待办) -->
     <div v-if="mainTab === 'inbox'" class="list-content">
       <div class="card" v-for="item in inboxList" :key="item.id" @click="openDetail(item)">
         <div class="row">
           <div class="user">
-            <h3>{{ item.worker_name }}</h3>
+            <h3>{{ item.resume_data?.basic?.name || item.worker_name }}</h3>
             <p class="job-title">投递: {{ item.job_title }}</p>
           </div>
         </div>
@@ -32,9 +30,7 @@
       </div>
     </div>
 
-    <!-- Tab 2：全部简历 (数据台账) -->
     <div v-if="mainTab === 'all'" class="list-content">
-      <!-- 筛选工具栏 -->
       <div class="filter-bar">
         <div class="chips">
           <span :class="{ active: filterStatus === 'all' }" @click="filterStatus = 'all'">全部</span>
@@ -52,7 +48,7 @@
       <div class="card" v-for="item in allList" :key="item.id" @click="openDetail(item)">
         <div class="row">
           <div class="user">
-            <h3>{{ item.worker_name }}</h3>
+            <h3>{{ item.resume_data?.basic?.name || item.worker_name }}</h3>
             <p class="job-title">投递: {{ item.job_title }}</p>
           </div>
           <div class="status-badge" :class="getStatusClass(item.status)">
@@ -63,43 +59,87 @@
       <div v-if="allList.length === 0" class="empty">暂无匹配的简历</div>
     </div>
 
-    <!-- 详情弹窗 (展示脱敏手机号) -->
+    <!-- 详情弹窗 -->
     <div v-if="showDetail" class="modal-overlay" @click.self="showDetail = false">
-      <div class="modal-content">
-        <h3>人才档案详情</h3>
-        <div class="detail-info">
-          <p><strong>姓名：</strong>{{ currentResume.worker_name }}</p>
-          <p><strong>电话：</strong>{{ maskPhone(currentResume.worker_phone) }}</p>
+      <div class="modal-box archive-modal">
+        <div class="modal-header">
+          <h3>人才档案详情</h3>
+          <span class="close-btn" @click="showDetail = false">✕</span>
         </div>
-        <div class="modal-btns">
-          <button class="btn-call" @click="call(currentResume.worker_phone)">📞 拨打电话</button>
-          <button class="btn-close" @click="showDetail = false">关闭</button>
+
+        <div class="modal-body">
+          <div class="resume-section">
+            <div class="sec-title">基础信息</div>
+            <p><strong>姓名：</strong>{{ currentResume.resume_data?.basic?.name || currentResume.worker_name }}</p>
+            <p><strong>电话：</strong>{{ maskPhone(currentResume.worker_phone) }}</p>
+            <p v-if="currentResume.resume_data?.basic?.email"><strong>邮箱：</strong>{{ currentResume.resume_data.basic.email }}</p>
+          </div>
+
+          <div class="resume-section">
+            <div class="sec-title">本次投递岗位</div>
+            <p><strong>岗位：</strong>{{ currentResume.job_title }}</p>
+          </div>
+
+          <div class="resume-section" v-if="currentResume.resume_data?.basic">
+            <div class="sec-title">核心技能</div>
+            <p class="pre-wrap">{{ currentResume.resume_data.basic.skills || '未填写' }}</p>
+
+            <div class="sec-title" style="margin-top: 12px;">教育背景</div>
+            <p class="pre-wrap">{{ currentResume.resume_data.basic.education || '未填写' }}</p>
+          </div>
+
+          <div class="resume-section highlight" v-if="matchedJobResume">
+            <div class="sec-title">岗位工作经历 (按STAR法则)</div>
+            <p class="pre-wrap">{{ matchedJobResume.work_experience || '未填写' }}</p>
+
+            <div class="sec-title" style="margin-top: 12px;">自我评价</div>
+            <p class="pre-wrap">{{ matchedJobResume.self_evaluation || '未填写' }}</p>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button class="btn-call" @click="call(currentResume.worker_phone)">📞 拨打真实电话</button>
         </div>
       </div>
     </div>
 
-    <!-- 邀面试弹窗 -->
+    <!-- 🚨 修复：邀面试弹窗 -->
     <div v-if="showInviteModal" class="modal-overlay" @click.self="showInviteModal = false">
-      <div class="modal-content">
+      <div class="modal-box invite-modal">
         <h3>发起面试邀请</h3>
-        <div class="form-item"><label>面试时间</label><input type="datetime-local" v-model="inviteForm.time" /></div>
-        <div class="form-item"><label>面试地点</label><input type="text" v-model="inviteForm.address" placeholder="如：XX厂区人事部" /></div>
-        <div class="form-item">
-          <label>面试方式</label>
-          <select v-model="inviteForm.method"><option value="线下">线下实地</option><option value="线上">线上视频</option></select>
+
+        <div class="form-group">
+          <label>面试时间</label>
+          <input type="datetime-local" v-model="inviteForm.time" />
         </div>
-        <div class="btn-group">
+
+        <div class="form-group">
+          <label>面试地点</label>
+          <input type="text" v-model="inviteForm.address" placeholder="如：XX厂区人事部" />
+        </div>
+
+        <div class="form-group">
+          <label>面试方式</label>
+          <select v-model="inviteForm.method">
+            <option value="线下">线下实地</option>
+            <option value="线上">线上视频</option>
+          </select>
+        </div>
+
+        <div class="modal-btns">
           <button class="btn-cancel" @click="showInviteModal = false">取消</button>
           <button class="btn-pass" @click="submitInvite">发送邀请</button>
         </div>
       </div>
     </div>
 
-    <!-- 拒绝问卷 -->
+    <!-- 🚨 修复：拒绝问卷 -->
     <div v-if="showRejectModal" class="modal-overlay" @click.self="showRejectModal = false">
-      <div class="modal-content">
+      <div class="modal-box invite-modal">
         <h3>不合适原因</h3>
-        <div class="form-item">
+
+        <div class="form-group">
+          <label>选择原因</label>
           <select v-model="rejectForm.mainReason">
             <option value="">请选择原因...</option>
             <option value="经验或技能不匹配">经验或技能不匹配</option>
@@ -108,8 +148,13 @@
             <option value="岗位已招满">岗位已招满</option>
           </select>
         </div>
-        <div class="form-item"><textarea v-model="rejectForm.detail" placeholder="补充说明..." rows="2"></textarea></div>
-        <div class="btn-group">
+
+        <div class="form-group">
+          <label>补充说明 (选填)</label>
+          <textarea v-model="rejectForm.detail" placeholder="填写详细原因..." rows="3"></textarea>
+        </div>
+
+        <div class="modal-btns">
           <button class="btn-cancel" @click="showRejectModal = false">取消</button>
           <button class="btn-pass" @click="submitReject">确认提交</button>
         </div>
@@ -127,26 +172,27 @@ const allData = ref([])
 const filterStatus = ref('all')
 const showRejected = ref(false)
 
-// 弹窗控制
 const showDetail = ref(false)
 const currentResume = ref({})
+
 const showInviteModal = ref(false)
 const inviteForm = ref({ time: '', address: '', method: '线下' })
 const showRejectModal = ref(false)
 const rejectForm = ref({ mainReason: '', detail: '' })
+
+const matchedJobResume = computed(() => {
+  if (!currentResume.value.resume_data || !currentResume.value.resume_data.jobs) return null
+  const jobs = currentResume.value.resume_data.jobs
+  return jobs.find(j => currentResume.value.job_title.includes(j.target_job)) || jobs[0] || null
+})
 
 const loadData = async () => {
   const res = await api.get('/jobs/received')
   allData.value = res.data || []
 }
 
-// Tab 1 数据：仅状态 1 (待处理)
-const inboxList = computed(() => {
-  return allData.value.filter(item => item.status === 1)
-})
+const inboxList = computed(() => allData.value.filter(item => item.status === 1))
 const inboxCount = computed(() => inboxList.value.length)
-
-// Tab 2 数据：受 Chip 和 Checkbox 控制
 const allList = computed(() => {
   return allData.value.filter(item => {
     if (!showRejected.value && [4, 6].includes(item.status)) return false
@@ -155,32 +201,13 @@ const allList = computed(() => {
   })
 })
 
-// 🚨 手机号脱敏方法
-const maskPhone = (phone) => {
-  if (!phone) return ''
-  return phone.replace(/(\d{3})\d{4}(\d{4})/, '$1****$2')
-}
+const maskPhone = (phone) => phone ? phone.replace(/(\d{3})\d{4}(\d{4})/, '$1****$2') : ''
+const getStatusText = (status) => ({ 1: '待处理', 2: '待面试', 3: '面试已同意', 4: '面试已拒绝', 5: '已录用', 6: '不合适', 7: '申请结单中', 8: '已完工', 9: '结单争议' }[status] || '未知')
+const getStatusClass = (status) => [1].includes(status) ? 'pending' : ([5, 8].includes(status) ? 'success' : ([2, 3, 7].includes(status) ? 'warning' : 'danger'))
 
-const getStatusText = (status) => {
-  const map = { 1: '待处理', 2: '待面试', 3: '面试已同意', 4: '面试已拒绝', 5: '已录用', 6: '不合适', 7: '申请结单中', 8: '已完工', 9: '结单争议' }
-  return map[status] || '未知'
-}
-const getStatusClass = (status) => {
-  if ([1].includes(status)) return 'pending'
-  if ([5, 8].includes(status)) return 'success'
-  if ([2, 3, 7].includes(status)) return 'warning'
-  return 'danger'
-}
-
-// 业务操作
 const openDetail = (item) => { currentResume.value = item; showDetail.value = true }
 const call = (phone) => { window.location.href = `tel:${phone}` }
-
-const openInvite = (item) => {
-  currentResume.value = item;
-  inviteForm.value = { time: '', address: '', method: '线下' };
-  showInviteModal.value = true
-}
+const openInvite = (item) => { currentResume.value = item; inviteForm.value = { time: '', address: '', method: '线下' }; showInviteModal.value = true }
 
 const submitInvite = async () => {
   if (!inviteForm.value.time || !inviteForm.value.address) return window.$toast('请填写时间地点')
@@ -198,7 +225,6 @@ const submitInvite = async () => {
 }
 
 const openRejectModal = (item) => { currentResume.value = item; rejectForm.value = { mainReason: '', detail: '' }; showRejectModal.value = true }
-
 const submitReject = async () => {
   if (!rejectForm.value.mainReason) return window.$toast('请选择原因')
   const reason = rejectForm.value.detail ? `${rejectForm.value.mainReason}(${rejectForm.value.detail})` : rejectForm.value.mainReason
@@ -210,7 +236,6 @@ onMounted(() => { loadData() })
 </script>
 
 <style scoped>
-/* 样式保持上一版不变 */
 .talent-page { min-height: 100vh; background: #f0f2f5; }
 .sticky-header { position: sticky; top: 0; z-index: 99; background: #fff; padding: 16px; border-bottom: 1px solid #eee; }
 .sticky-header h2 { font-size: 18px; color: #1f2937; }
@@ -242,22 +267,44 @@ onMounted(() => { loadData() })
 .status-badge.success { color: #10b981; }
 .status-badge.warning { color: #2563eb; }
 .status-badge.danger { color: #ef4444; }
-
 .empty { text-align: center; padding: 60px 0; color: #9ca3af; }
 
-/* 弹窗样式 */
-.modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 999; display: flex; justify-content: center; align-items: center; }
-.modal-content { background: #fff; width: 85%; border-radius: 12px; padding: 20px; }
-.modal-content h3 { text-align: center; margin-bottom: 20px; font-size: 18px; }
-.detail-info p { font-size: 14px; color: #333; margin-bottom: 10px; }
-.modal-btns { display: flex; gap: 10px; margin-top: 20px; }
-.modal-btns button { flex: 1; padding: 12px; border-radius: 6px; font-weight: bold; border: none; cursor: pointer; }
-.btn-call { background: #eff6ff; color: #2563eb; }
-.btn-close { background: #f3f4f6; color: #666; }
-.form-item { margin-bottom: 16px; }
-.form-item label { display: block; font-size: 14px; font-weight: bold; margin-bottom: 8px; }
-.form-item input, .form-item select, .form-item textarea { width: 100%; padding: 10px; border: 1px solid #e5e7eb; border-radius: 6px; outline: none; font-family: inherit; resize: none; }
-.btn-group { display: flex; gap: 12px; margin-top: 20px; }
-.btn-group button { flex: 1; padding: 12px; border-radius: 6px; font-weight: bold; border: none; }
+/* 🚨 统一弹窗基础样式 */
+.modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6); z-index: 9999; display: flex; justify-content: center; align-items: center; }
+.modal-box { background: #fff; width: 90%; max-width: 400px; border-radius: 12px; padding: 20px; display: flex; flex-direction: column; max-height: 85vh; }
+
+/* 🚨 邀面试、拒绝弹窗（表单修复） */
+.invite-modal h3 { text-align: center; margin-bottom: 20px; font-size: 18px; }
+.form-group { margin-bottom: 16px; }
+.form-group label { display: block; font-size: 14px; font-weight: bold; color: #333; margin-bottom: 8px; }
+.form-group input, .form-group select, .form-group textarea {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  font-size: 14px;
+  outline: none;
+  background: #f9fafb;
+  font-family: inherit;
+}
+.form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color: #2563eb; background: #fff; }
+.form-group textarea { resize: vertical; }
+.modal-btns { display: flex; gap: 12px; margin-top: 10px; }
+.modal-btns button { flex: 1; padding: 12px; border-radius: 6px; font-weight: bold; border: none; font-size: 15px; cursor: pointer; }
 .btn-cancel { background: #f3f4f6; color: #666; }
+
+/* 🚨 简历详情弹窗 */
+.archive-modal { padding: 0; }
+.modal-header { padding: 16px; border-bottom: 1px solid #e5e7eb; display: flex; justify-content: space-between; align-items: center; }
+.modal-header h3 { font-size: 16px; margin: 0; }
+.close-btn { font-size: 18px; color: #999; cursor: pointer; }
+.modal-body { padding: 16px; overflow-y: auto; flex: 1; background: #f8fafc; }
+.resume-section { background: #fff; border-radius: 8px; padding: 16px; margin-bottom: 12px; border: 1px solid #f1f5f9; }
+.resume-section.highlight { border-left: 4px solid #2563eb; }
+.sec-title { font-size: 14px; font-weight: bold; color: #2563eb; margin-bottom: 8px; }
+.modal-body p { font-size: 13px; color: #4b5563; line-height: 1.6; margin-bottom: 6px; }
+.pre-wrap { white-space: pre-wrap; background: #f9fafb; padding: 10px; border-radius: 6px; }
+.modal-footer { padding: 16px; border-top: 1px solid #e5e7eb; }
+.btn-call { width: 100%; background: #eff6ff; color: #2563eb; padding: 12px; border-radius: 8px; font-weight: bold; border: 1px solid #bfdbfe; font-size: 15px; cursor: pointer; }
 </style>

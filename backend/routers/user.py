@@ -1,4 +1,4 @@
-# backend/routers/user.py (用户业务接口：查询积分、扣减积分、多套简历维护)
+# backend/routers/user.py (用户业务接口：查询积分、简历维护、实名认证)
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from typing import Optional, List, Dict, Any
@@ -13,8 +13,15 @@ router = APIRouter(prefix="/api/user", tags=["user"])
 
 
 class ResumeReq(BaseModel):
-    basic: Dict[str, Any]  # 通用信息: name, phone, email, skills, education
-    jobs: List[Dict[str, Any]]  # 岗位专属简历列表: 包含 id, target_job, target_city, work_experience, self_evaluation
+    basic: Dict[str, Any]
+    jobs: List[Dict[str, Any]]
+
+
+class VerifyReq(BaseModel):
+    real_name: str
+    id_card: str
+    id_front_img: str
+    id_back_img: str
 
 
 @router.get("/points")
@@ -40,26 +47,44 @@ async def exchange_item(db: AsyncSession = Depends(get_db), user_id: int = Depen
 @router.get("/resume")
 async def get_resume(db: AsyncSession = Depends(get_db), user_id: int = Depends(get_current_user_id)):
     user = await db.get(User, user_id)
-    if not user:
-        raise HTTPException(status_code=404, detail="用户不存在")
-
-    # 结构兜底
+    if not user: raise HTTPException(status_code=404, detail="用户不存在")
     resume_data = user.resume_data or {}
-    if "basic" not in resume_data:
-        resume_data["basic"] = {"name": "", "phone": "", "email": "", "skills": "", "education": ""}
-    if "jobs" not in resume_data:
-        resume_data["jobs"] = []
-
+    if "basic" not in resume_data: resume_data["basic"] = {"name": "", "phone": "", "email": "", "skills": "",
+                                                           "education": ""}
+    if "jobs" not in resume_data: resume_data["jobs"] = []
     return {"code": 0, "data": resume_data}
 
 
 @router.put("/resume")
 async def save_resume(req: ResumeReq, db: AsyncSession = Depends(get_db), user_id: int = Depends(get_current_user_id)):
     user = await db.get(User, user_id)
-    if not user:
-        raise HTTPException(status_code=404, detail="用户不存在")
-
+    if not user: raise HTTPException(status_code=404, detail="用户不存在")
     user.resume_data = req.dict()
     flag_modified(user, "resume_data")
     await db.commit()
     return {"code": 0, "message": "简历保存成功"}
+
+
+@router.get("/verify-status")
+async def get_verify_status(db: AsyncSession = Depends(get_db), user_id: int = Depends(get_current_user_id)):
+    user = await db.get(User, user_id)
+    return {"code": 0, "data": {"status": user.verify_status, "real_name": user.real_name}}
+
+
+@router.post("/verify")
+async def submit_verify(req: VerifyReq, db: AsyncSession = Depends(get_db),
+                        user_id: int = Depends(get_current_user_id)):
+    user = await db.get(User, user_id)
+    if not user: raise HTTPException(status_code=404, detail="用户不存在")
+
+    user.real_name = req.real_name
+    user.id_card = req.id_card[:4] + "**********" + req.id_card[-4:] if len(req.id_card) >= 18 else req.id_card
+    user.verify_status = "verified"
+
+    if not user.resume_data: user.resume_data = {}
+    user.resume_data["id_front_img"] = req.id_front_img
+    user.resume_data["id_back_img"] = req.id_back_img
+    flag_modified(user, "resume_data")
+
+    await db.commit()
+    return {"code": 0, "message": "实名认证成功"}

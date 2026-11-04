@@ -1,4 +1,4 @@
-<!-- (C端长期稳定：左右布局，支持点击跳转) -->
+<!-- frontend/src/views/worker/WorkerLongTerm.vue (C端长期稳定：统一跳转详情页投递) -->
 <template>
   <div class="list-page">
     <div class="category-bar">
@@ -9,7 +9,6 @@
     </div>
 
     <div class="job-list">
-      <!-- 🚨 加上点击跳转 -->
       <div class="card" v-for="job in jobs" :key="job.id" @click="goToDetail(job.id)">
         <div class="info-left">
           <h3>{{ job.title }}</h3>
@@ -19,7 +18,7 @@
 
         <div class="action-right">
           <div class="price">{{ job.salary }}</div>
-          <!-- 🚨 阻止冒泡，防止点投递时跳详情 -->
+          <!-- 🚨 修复：点击投递不再直接发请求，而是跳转到详情页统一走选简历流程 -->
           <button class="btn-apply" @click.stop="apply(job.id)">投递</button>
         </div>
       </div>
@@ -34,7 +33,7 @@ import { useRouter } from 'vue-router'
 import api from '../../api'
 import AppIcon from '../../components/AppIcon.vue'
 
-const router = useRouter() // 🚨 引入路由
+const router = useRouter()
 const categories = [
   { tag: '正式工岗', iconName: 'zhengshi' }, { tag: '厂区直招', iconName: 'changqu' },
   { tag: '技术工种', iconName: 'jishu' }, { tag: '长白班岗', iconName: 'changbai' },
@@ -57,14 +56,18 @@ const toggleTag = (tag) => {
   loadJobs()
 }
 
-// 🚨 跳转逻辑
 const goToDetail = (id) => {
   router.push(`/worker/job-detail/${id}`)
 }
 
-const apply = async (id) => {
-  try { window.$toast((await api.post(`/jobs/apply/${id}`)).message) }
-  catch (err) { window.$toast(err.response?.data?.detail || '投递失败') }
+// 🚨 核心修复：列表页的投递按钮直接引导去详情页
+const apply = (id) => {
+  if (!localStorage.getItem('token')) {
+    window.$toast('请先登录')
+    window.location.hash = '#/login'
+    return
+  }
+  router.push(`/worker/job-detail/${id}`)
 }
 
 onMounted(() => { loadJobs() })
@@ -80,7 +83,6 @@ onMounted(() => { loadJobs() })
 .cat-card.active .text { color: #fff; font-size: 13px; font-weight: bold; line-height: 1.5; }
 
 .job-list { padding: 12px; }
-/* 🚨 加上 cursor: pointer */
 .card { background: #fff; border-radius: 8px; padding: 16px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
 .info-left { flex: 1; padding-right: 12px; }
 .info-left h3 { font-size: 16px; color: #1f2937; margin-bottom: 8px; }

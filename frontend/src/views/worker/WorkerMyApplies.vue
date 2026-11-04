@@ -1,4 +1,4 @@
-<!-- (C端我的投递：极简列表，去除冗长进度条) -->
+<!-- frontend/src/views/worker/WorkerMyApplies.vue (C端我的投递：展示面试时间与地点) -->
 <template>
   <div class="applies-page">
     <div class="header"><h2>我的投递</h2></div>
@@ -29,6 +29,11 @@
         <!-- 状态 3：面试已同意 -->
         <div class="action-bar" v-if="item.status === '面试已同意'">
           <p class="tip text-green">已确认去面试，请按时到达！</p>
+          <!-- 🚨 修复：展示具体的时间和地点 -->
+          <div class="interview-info" v-if="item.interview_time || item.interview_address">
+            <p><strong>⏰ 面试时间：</strong>{{ item.interview_time || '待通知' }}</p>
+            <p><strong>📍 面试地点：</strong>{{ item.interview_address || '待通知' }}</p>
+          </div>
         </div>
 
         <!-- 状态 5：已录用 -->
@@ -118,6 +123,12 @@ onMounted(() => { loadApplications() })
 .tip { font-size: 13px; color: #f59e0b; margin-bottom: 8px; }
 .tip.text-green { color: #10b981; }
 .tip.text-red { color: #ef4444; }
+
+/* 🚨 面试详情样式 */
+.interview-info { background: #f9fafb; padding: 10px 12px; border-radius: 6px; margin-top: 8px; border: 1px solid #e5e7eb; }
+.interview-info p { font-size: 13px; color: #4b5563; margin-bottom: 4px; }
+.interview-info p:last-child { margin-bottom: 0; }
+.interview-info strong { color: #1f2937; }
 
 .btns { display: flex; gap: 12px; }
 .btns button, .btn-finish { flex: 1; padding: 10px; border-radius: 6px; font-weight: bold; border: none; font-size: 14px; cursor: pointer; }
