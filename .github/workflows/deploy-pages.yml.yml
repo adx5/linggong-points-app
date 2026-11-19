@@ -1,0 +1,64 @@
+# Deploy Vite (Vue) static site to GitHub Pages
+name: Deploy frontend to Pages
+
+on:
+  push:
+    branches: ["main"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+        working-directory: ./frontend
+
+      - name: Build (base = repo subpath, so assets resolve under /linggong-points-app/)
+        run: npm run build -- --base=/linggong-points-app/
+        working-directory: ./frontend
+
+      - name: Verify dist is not empty
+        run: |
+          if [ -z "$(ls -A dist 2>/dev/null)" ]; then
+            echo "::error::frontend/dist is empty. Build failed."
+            exit 1
+          fi
+          echo "Built assets:"
+          ls -la dist
+        working-directory: ./frontend
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./frontend/dist
+
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v5
