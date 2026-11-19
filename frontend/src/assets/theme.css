@@ -1,0 +1,49 @@
+/* frontend/src/assets/theme.css
+ * 主题层：未登录 = 蓝色系（门面），登录后 = 橙色大字版
+ * 由 main.js 根据 localStorage.token 给 <body> 加 .is-authed 切换。
+ */
+
+:root {
+  /* —— 游客（未登录）：蓝色系，取自「UI 蓝色 C端求职首页」 —— */
+  --brand: #1677ff;
+  --brand-soft: #eaf2ff;
+  --brand-deep: #17335c;
+
+  --price: #ff7a1a;
+  --price-soft: #fff1e6;
+
+  --bg: #eef1f5;
+  --text: #1d2531;
+  --text-sub: #7b8797;
+
+  --hero-from: #bcdcff;
+  --hero-mid: #d9ecff;
+  --hero-to: #eef4fb;
+
+  --shadow-card: 0 4px 16px rgba(31, 79, 143, 0.08);
+}
+
+body.is-authed {
+  /* —— 登录后：大字版橙色 —— */
+  --brand: #ff6b00;
+  --brand-soft: #fff1e6;
+  --brand-deep: #17335c;
+
+  --price: #ff6b00;
+  --price-soft: #fff1e6;
+
+  --bg: #f5f7fa;
+  --text: #111;
+  --text-sub: #7b8797;
+
+  --hero-from: #ffe7d2;
+  --hero-mid: #fff3e8;
+  --hero-to: #ffffff;
+
+  --shadow-card: 0 4px 16px rgba(31, 79, 143, 0.08);
+}
+
+/* 主题切换时给一个极短的过渡，避免闪白 */
+body {
+  transition: background-color 0.2s ease;
+}

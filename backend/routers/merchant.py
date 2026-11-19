@@ -8,8 +8,12 @@ from database import get_db
 from models import CooperationEntity
 from core.security import get_current_user_id
 from sqlalchemy.orm.attributes import flag_modified
+import os
 
 router = APIRouter(prefix="/api/merchant", tags=["merchant"])
+
+# 加热置顶每天消耗的推广积分（与 jobs.py 保持一致）
+BOOST_POINTS_PER_DAY = int(os.environ.get("BOOST_POINTS_PER_DAY", "30"))
 
 
 class MerchantInfoReq(BaseModel):
@@ -54,6 +58,20 @@ async def update_merchant_info(req: MerchantInfoReq, db: AsyncSession = Depends(
     flag_modified(entity, "ext_info")
     await db.commit()
     return {"code": 0, "message": "公开信息保存成功"}
+
+
+@router.get("/balance")
+async def get_balance(db: AsyncSession = Depends(get_db), user_id: int = Depends(get_current_user_id)):
+    """企业推广积分余额（发布岗位时展示可用额度）"""
+    res = await db.execute(select(CooperationEntity).where(CooperationEntity.user_id == user_id))
+    entity = res.scalar_one_or_none()
+    if not entity:
+        raise HTTPException(status_code=404, detail="档案不存在")
+    return {"code": 0, "data": {
+        "promotion_balance": entity.promotion_balance or 0,
+        "status": entity.status,
+        "boost_points_per_day": BOOST_POINTS_PER_DAY,
+    }}
 
 
 class VerifyReq(BaseModel):

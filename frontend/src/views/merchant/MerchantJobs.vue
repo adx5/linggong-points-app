@@ -118,6 +118,17 @@
         </div>
         <textarea v-model="form.description" placeholder="岗位介绍..." rows="3" class="textarea-box"></textarea>
 
+        <!-- 推广奖励（按单从企业推广余额扣减） -->
+        <div class="section-title">推广奖励</div>
+        <div class="promo-row">
+          <span class="promo-label">每成功推广一单</span>
+          <input v-model.number="form.promotion_points" type="number" min="0" max="200" step="5" class="promo-input" />
+          <span class="promo-unit">积分</span>
+        </div>
+        <p class="promo-hint">
+          日结/短期建议 10 分，长期稳定岗建议 30 分；结算时从企业推广余额按单扣减，填 0 表示不参与推广。
+        </p>
+
         <!-- 6. 费用说明 -->
         <div class="section-title" style="color: #ef4444;">费用说明 (必选，可多选)</div>
         <div class="cost-row">
@@ -195,7 +206,8 @@ const form = reactive({
   title: '', salary_type: '月薪', salary_min: '', salary_max: '', pay_date: '', settle_method: '下班后结',
   province: '', city: '', district: '', location_text: '', job_type: 'long_term', filter_tag: '', tags: [],
   age_range: '18-45岁', gender: '男女不限', special_req: '', description: '',
-  cost_free: false, cost_medical: false, cost_medical_note: '', cost_uniform: false, cost_uniform_note: ''
+  cost_free: false, cost_medical: false, cost_medical_note: '', cost_uniform: false, cost_uniform_note: '',
+  promotion_points: 20
 })
 
 const provinceData = [
@@ -322,7 +334,8 @@ const submit = async () => {
     title: form.title, salary: previewSalary.value, location: previewLocation.value,
     job_type: form.job_type, filter_tag: form.filter_tag, tags: form.tags.join(','),
     description: `${form.description}\n【费用说明】${previewCost.value}`,
-    requirement: `年龄：${form.age_range}，性别：${form.gender}。特殊要求：${form.special_req}`
+    requirement: `年龄：${form.age_range}，性别：${form.gender}。特殊要求：${form.special_req}`,
+    promotion_points: Number(form.promotion_points) || 0
   }
   try {
     const res = await api.post('/jobs/create', payload)
@@ -343,6 +356,22 @@ onMounted(() => {})
 </script>
 
 <style scoped>
+.promo-row { display: flex; align-items: center; gap: 10px; margin: 10px 0 6px; }
+.promo-label { font-size: 15px; color: #333; font-weight: 600; }
+.promo-input {
+  width: 88px;
+  height: 44px;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  text-align: center;
+  font-size: 18px;
+  font-weight: 800;
+  color: #ff6b00;
+  outline: none;
+}
+.promo-input:focus { border-color: #ff6b00; }
+.promo-unit { font-size: 15px; color: #666; }
+.promo-hint { font-size: 12px; color: #9ca3af; line-height: 1.6; margin-bottom: 18px; }
 /* 保持原有样式不变 */
 .jobs-page { min-height: 100vh; background: #f0f2f5; }
 .sticky-header { position: sticky; top: 0; z-index: 99; background: #fff; padding: 16px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; }

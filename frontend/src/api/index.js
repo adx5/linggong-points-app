@@ -4,6 +4,9 @@ import router from '../router'
 
 const baseURL = import.meta.env.VITE_API_BASE_URL || '/api'
 
+// 🚨 防止并发 401 触发多次 reload 造成刷新死循环
+let redirectingToLogin = false
+
 const api = axios.create({
   baseURL: baseURL,
   timeout: 10000
@@ -45,10 +48,11 @@ api.interceptors.response.use(
         if (isAuthAction || router.currentRoute.value.meta.requireAuth) {
           if (window.$toast) window.$toast('登录状态已失效')
           localStorage.clear()
-          if (router.currentRoute.value.path !== '/login') {
-            // 🚨 核心修复：强制使用 Hash 路由刷新
-            window.location.hash = '#/login';
-            window.location.reload();
+          if (router.currentRoute.value.path !== '/login' && !redirectingToLogin) {
+            redirectingToLogin = true
+            // 🚨 核心修复：强制使用 Hash 路由刷新（加锁避免并发 401 反复 reload）
+            window.location.hash = '#/login'
+            window.location.reload()
           }
         } else {
           console.warn('游客浏览受限接口，已拦截重定向')

@@ -1,8 +1,7 @@
-# backend/requirements.txt (后端 Python 依赖清单)
+# backend/requirements.txt (Backend Python dependencies)
 fastapi==0.115.0
 uvicorn[standard]==0.32.0
 sqlalchemy==2.0.36
-asyncpg==0.30.0
 psycopg[binary]==3.3.6
 pydantic==2.13.4
 python-multipart==0.0.12
@@ -11,12 +10,15 @@ PyJWT==2.9.0
 redis==5.0.8
 hypercorn==0.18.0
 
-# 图片处理与文件校验
+# Image processing & file validation
 Pillow==11.1.0
 filetype==1.2.0
 
-# 定时任务
+# Scheduled tasks
 APScheduler==3.10.4
 
-# 网络请求 (蜜蜂图床)
+# Database migrations
+alembic==1.20.1
+
+# Network requests (Bee image host)
 httpx==0.27.0

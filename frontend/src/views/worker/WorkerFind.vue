@@ -1,114 +1,328 @@
-<!-- (C端找活大厅：左右布局，释放信息空间) -->
+<!-- frontend/src/views/worker/WorkerFind.vue —— 大字版「找活」大厅
+     设计来源：参考图（找活 tab）
+       滚动前：搜索框 + 八宫格图标
+       滚动后：八宫格收起 → 一行可横滑的文字标签吸顶
+     卡片：标题 + 薪资 / 年龄或地区 | 企业 / 标签
+-->
 <template>
-  <div class="find-page">
-    <div class="search-box">
-      <input type="text" v-model="keyword" placeholder="请输入工作名称" @keyup.enter="handleSearch" />
-      <button @click="handleSearch">搜索</button>
-    </div>
-
-    <div class="list" ref="scrollContainer" @scroll="handleScroll">
-      <div class="card" v-for="job in jobs" :key="job.id" @click="goToDetail(job.id)">
-        <!-- 左侧信息流 -->
-        <div class="info-left">
-          <div class="title-row">
-            <h3>{{ job.title }}</h3>
-          </div>
-          <div class="tags">
-            <span v-for="tag in job.tags.split(',')" :key="tag">{{ tag }}</span>
-          </div>
-          <p class="loc">📍 {{ job.location }}</p>
-        </div>
-
-        <!-- 右侧操作与薪资 -->
-        <div class="action-right">
-          <div class="price">{{ job.salary }}</div>
-          <button class="btn-apply" @click.stop="apply(job.id)">投递</button>
-        </div>
+  <div class="wf-page">
+    <!-- 顶部：搜索 + 折叠后的文字标签 -->
+    <header class="wf-top">
+      <div class="wf-search">
+        <span class="wf-search-ico">🔍</span>
+        <input
+          v-model="keyword"
+          class="wf-search-input"
+          placeholder="搜索：普工、叉车、保洁"
+          @keyup.enter="handleSearch"
+        />
+        <button v-if="keyword" class="wf-clear" @click="clearKeyword">✕</button>
       </div>
 
-      <div v-if="jobs.length === 0 && !loading" class="empty">暂无岗位，去其他板块看看吧</div>
-      <div v-if="loading" class="loading-text">加载中...</div>
-      <div v-if="noMore && jobs.length > 0" class="loading-text">没有更多岗位了~</div>
-    </div>
+      <div v-show="collapsed" class="wf-strip">
+        <button
+          v-for="c in cats"
+          :key="c.label"
+          :class="['wf-strip-item', { on: activeCat === c.label }]"
+          @click="pickCat(c)"
+        >
+          {{ c.label }}
+        </button>
+      </div>
+    </header>
+
+    <!-- 八宫格（未折叠时） -->
+    <section v-show="!collapsed" class="wf-cats">
+      <button
+        v-for="c in cats"
+        :key="c.label"
+        :class="['wf-cat', { hot: c.hot, on: activeCat === c.label }]"
+        @click="pickCat(c)"
+      >
+        <span class="wf-cat-ico">{{ c.icon }}</span>
+        <span class="wf-cat-label">{{ c.label }}</span>
+      </button>
+    </section>
+
+    <!-- 岗位列表 -->
+    <section class="wf-list">
+      <article v-for="job in jobs" :key="job.id" class="wf-card" @click="goDetail(job.id)">
+        <div class="wf-row1">
+          <h3 class="wf-title">{{ job.title }}</h3>
+          <span class="wf-price">{{ job.salary }}</span>
+        </div>
+        <p class="wf-row2">
+          <span class="wf-hl">{{ job.location }}</span>
+          <template v-if="job.company_name"> | {{ job.company_name }}</template>
+        </p>
+        <div class="wf-tags">
+          <span class="wf-tag">{{ job.filter_tag || '日结' }}</span>
+          <span class="wf-tag gray">{{ job.job_type === 'long_term' ? '长期' : '短期' }}</span>
+        </div>
+      </article>
+
+      <p v-if="loading" class="wf-tip">加载中…</p>
+      <p v-else-if="!jobs.length" class="wf-tip">暂无岗位，换个关键词或分类试试</p>
+      <p v-else-if="noMore" class="wf-tip">— 已经到底了 —</p>
+    </section>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter } from 'vue-router'
 import api from '../../api'
 
 const router = useRouter()
+
+const cats = [
+  { icon: '💼', label: '正式工岗' },
+  { icon: '🏭', label: '厂区直招' },
+  { icon: '💵', label: '日结周结', hot: true },
+  { icon: '🛵', label: '外卖快递' },
+  { icon: '🛠️', label: '技术工种' },
+  { icon: '👴', label: '大龄兜底' },
+  { icon: '🍱', label: '餐饮兼职' },
+  { icon: '📦', label: '分拣搬运' }
+]
+const activeCat = ref('')
 const keyword = ref('')
+
 const jobs = ref([])
 const page = ref(1)
 const size = 10
 const loading = ref(false)
 const noMore = ref(false)
-const scrollContainer = ref(null)
 
-const goToDetail = (id) => router.push(`/worker/job-detail/${id}`)
+// 滚动折叠
+const collapsed = ref(false)
+const COLLAPSE_AT = 88
 
-const loadJobs = async (isAppend = false) => {
+function onScroll() {
+  collapsed.value = window.scrollY > COLLAPSE_AT
+}
+
+async function loadJobs(append = false) {
   if (loading.value) return
   loading.value = true
   try {
-    const res = await api.get('/jobs/list', { params: { keyword: keyword.value, page: page.value, size: size } })
-    const newJobs = res.data || []
-    if (isAppend) jobs.value = [...jobs.value, ...newJobs]
-    else jobs.value = newJobs
-    noMore.value = jobs.value.length >= res.total
-  } catch (err) { console.error(err) } finally { loading.value = false }
-}
-
-const handleSearch = () => { page.value = 1; noMore.value = false; loadJobs(false) }
-const handleScroll = (e) => {
-  const el = e.target
-  if (el.scrollHeight - el.scrollTop - el.clientHeight < 20) {
-    if (!loading.value && !noMore.value) { page.value++; loadJobs(true) }
+    const res = await api.get('/jobs/list', {
+      params: { keyword: keyword.value, page: page.value, size }
+    })
+    const rows = res.data || []
+    jobs.value = append ? [...jobs.value, ...rows] : rows
+    noMore.value = jobs.value.length >= (res.total || 0)
+  } catch (err) {
+    if (!append) jobs.value = []
+    if (window.$toast) window.$toast(err.response?.data?.detail || '岗位加载失败')
+    noMore.value = true
+  } finally {
+    loading.value = false
   }
 }
 
-const apply = async (id) => {
-  try {
-    const res = await api.post(`/jobs/apply/${id}`)
-    window.$toast(res.message)
-  } catch (err) { window.$toast(err.response?.data?.detail || '投递失败') }
+function handleSearch() {
+  page.value = 1
+  noMore.value = false
+  loadJobs(false)
 }
 
-onMounted(() => { loadJobs() })
+function pickCat(cat) {
+  activeCat.value = activeCat.value === cat.label ? '' : cat.label
+  keyword.value = activeCat.value
+  handleSearch()
+  // 收起状态下切换分类，滚动回顶部更符合预期
+  if (collapsed.value) window.scrollTo({ top: 0, behavior: 'smooth' })
+}
+
+function clearKeyword() {
+  keyword.value = ''
+  activeCat.value = ''
+  handleSearch()
+}
+
+function goDetail(id) {
+  router.push(`/worker/job-detail/${id}`)
+}
+
+// 滚动到底自动加载下一页
+function maybeLoadMore() {
+  const nearBottom = window.innerHeight + window.scrollY >= document.body.scrollHeight - 200
+  if (nearBottom && !loading.value && !noMore.value) {
+    page.value += 1
+    loadJobs(true)
+  }
+}
+
+function onWindowScroll() {
+  onScroll()
+  maybeLoadMore()
+}
+
+onMounted(() => {
+  loadJobs(false)
+  window.addEventListener('scroll', onWindowScroll, { passive: true })
+  onScroll()
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('scroll', onWindowScroll)
+})
 </script>
 
 <style scoped>
-.find-page { height: 100vh; display: flex; flex-direction: column; background: #f5f6f8; }
-.search-box { display: flex; padding: 12px; background: #fff; flex-shrink: 0; }
-.search-box input { flex: 1; padding: 10px; background: #f3f4f6; border-radius: 6px 0 0 6px; font-size: 14px; outline: none; border: none; }
-.search-box button { background: #2563eb; color: #fff; padding: 0 20px; border-radius: 0 6px 6px 0; font-weight: bold; border: none; cursor: pointer; }
-.list { flex: 1; overflow-y: auto; padding: 12px; }
-
-/* 🚨 核心：左右 Flex 布局 */
-.card {
-  background: #fff;
-  border-radius: 8px;
-  padding: 16px;
-  margin-bottom: 12px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center; /* 垂直居中 */
+.wf-page {
+  min-height: 100vh;
+  background: var(--bg, #eef1f5);
+  padding-bottom: 20px;
+  font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
 }
 
-/* 左侧信息区 */
-.info-left { flex: 1; padding-right: 12px; }
-.title-row h3 { font-size: 16px; color: #1f2937; margin-bottom: 8px; }
-.tags { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
-.tags span { background: #f3f4f6; font-size: 11px; padding: 2px 6px; border-radius: 4px; color: #666; }
-.loc { font-size: 12px; color: #9ca3af; margin: 0; }
+.wf-top {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: #fff;
+  padding: 12px 20px 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+}
+.wf-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 46px;
+  padding: 0 16px;
+  background: var(--bg);
+  border-radius: 999px;
+}
+.wf-search-ico { font-size: 15px; }
+.wf-search-input {
+  flex: 1;
+  border: none;
+  background: none;
+  outline: none;
+  font-size: 16px;
+  color: #111;
+  min-width: 0;
+}
+.wf-search-input::placeholder { color: #9aa6b5; }
+.wf-clear {
+  border: none;
+  background: #dfe5ee;
+  color: #fff;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  font-size: 12px;
+}
 
-/* 右侧操作区 */
-.action-right { display: flex; flex-direction: column; align-items: flex-end; gap: 12px; flex-shrink: 0; }
-.price { color: #ef4444; font-weight: bold; font-size: 15px; text-align: right; }
-.btn-apply { background: #2563eb; color: #fff; padding: 6px 16px; border-radius: 6px; font-weight: bold; font-size: 13px; border: none; cursor: pointer; }
+/* 折叠后的文字标签条 */
+.wf-strip {
+  display: flex;
+  gap: 20px;
+  padding: 12px 0 10px;
+  overflow-x: auto;
+  white-space: nowrap;
+  border-top: 1px solid #f2f4f7;
+  margin-top: 10px;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.wf-strip::-webkit-scrollbar { display: none; }
+.wf-strip-item {
+  flex-shrink: 0;
+  border: none;
+  background: none;
+  padding: 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: #333;
+}
+.wf-strip-item.on { color: var(--price, #ff7a1a); }
 
-.empty { text-align: center; padding: 40px; color: #999; }
-.loading-text { text-align: center; font-size: 12px; color: #999; padding: 10px 0; }
+/* 八宫格 */
+.wf-cats {
+  display: flex;
+  flex-wrap: wrap;
+  background: #fff;
+  padding: 16px 10px 18px;
+  margin-bottom: 12px;
+}
+.wf-cat {
+  width: 25%;
+  border: none;
+  background: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 0;
+}
+.wf-cat-ico {
+  width: 46px;
+  height: 46px;
+  border-radius: 14px;
+  background: #f9fafc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 23px;
+}
+.wf-cat-label { font-size: 14px; font-weight: 700; color: #333; }
+.wf-cat.hot .wf-cat-ico { background: var(--price-soft, #fff1e6); border: 1px solid var(--price, #ff7a1a); }
+.wf-cat.hot .wf-cat-label { color: var(--price, #ff7a1a); }
+.wf-cat.on .wf-cat-ico { background: var(--price, #ff7a1a); border-color: var(--price, #ff7a1a); }
+.wf-cat.on .wf-cat-label { color: var(--price, #ff7a1a); }
+
+/* 岗位卡片（纯文字版） */
+.wf-list { padding: 0 20px; }
+.wf-card {
+  background: #fff;
+  border-radius: 16px;
+  padding: 18px 20px;
+  margin-bottom: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+}
+.wf-row1 {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+.wf-title {
+  font-size: 20px;
+  font-weight: 800;
+  color: #111;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.wf-price {
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--price, #ff7a1a);
+  flex-shrink: 0;
+}
+.wf-row2 {
+  margin: 8px 0 12px;
+  font-size: 15px;
+  font-weight: 600;
+  color: #333;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.wf-hl { color: var(--price, #ff7a1a); font-weight: 800; margin-right: 6px; }
+.wf-tags { display: flex; gap: 8px; flex-wrap: wrap; }
+.wf-tag {
+  background: var(--price-soft, #fff1e6);
+  color: var(--price, #ff7a1a);
+  font-size: 13px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 6px;
+}
+.wf-tag.gray { background: var(--bg); color: #555; }
+
+.wf-tip { text-align: center; font-size: 14px; color: #9aa6b5; padding: 22px 0; }
 </style>

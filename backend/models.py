@@ -29,7 +29,8 @@ class User(Base):
     total_points = Column(Integer, default=0)
     city_id = Column(String(10), index=True, nullable=True)
     token_version = Column(Integer, default=0, nullable=False)
-    role = Column(String(20), default="worker", index=True)
+    # 与库中实际约束保持一致（DB 为 NOT NULL），避免 Alembic 持续报漂移
+    role = Column(String(20), default="worker", index=True, nullable=False)
     available_roles = Column(String(100), default="worker")
     resume_data = Column(JSONB, default={})
 
@@ -53,6 +54,8 @@ class CooperationEntity(Base):
     reject_reason = Column(String(255), default="")
     credit_score = Column(Integer, default=100)
     deposit_amount = Column(Float, default=0.0)
+    # 推广积分余额（B 端充值，按单扣减；平台不代收 C 端资金，规避二清）
+    promotion_balance = Column(Float, default=0.0)
     bank_account = Column(String(100), default="")
     ext_info = Column(JSONB, default={})
     created_at = Column(DateTime, default=datetime.utcnow)
@@ -84,9 +87,22 @@ class Job(Base):
     tags = Column(String(255))
     description = Column(Text, default="")
     requirement = Column(Text, default="")
+    # 企业上传的岗位封面（图床 URL），为空时前端用占位图兜底
+    cover_image = Column(String(255), default="")
+    # 企业注册地所在区/镇，用于「附近」粗粒度筛选（大范围）
+    district = Column(String(50), default="", index=True)
     publish_status = Column(String(20), default="draft", index=True)
     risk_score = Column(Integer, default=0)
     risk_points = Column(Text, default="")
+    # 风控判定结果：unchecked / pass / review(转人工) / blocked(拦截)
+    risk_status = Column(String(20), default="unchecked", index=True)
+    risk_checked_at = Column(DateTime, nullable=True)
+    # 本岗位每成功推广一单奖励的积分（发布时由 B 端设定，结算时从企业推广余额扣减）
+    promotion_points = Column(Integer, default=0)
+    # 加热置顶到期时间（>现在 表示置顶中）；加热消耗企业推广余额
+    pinned_until = Column(DateTime, nullable=True)
+    # 最近一次「刷新」时间：C 端排序用（越新越靠前）
+    refreshed_at = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
 
 
@@ -97,6 +113,8 @@ class JobApplication(Base):
     worker_id = Column(Integer, ForeignKey("users.id"))
     city_id = Column(String(10), index=True, nullable=True)
     business_city_id = Column(String(10), index=True, nullable=True)
+    # 推广归属：这条投递是谁推广来的（结单后给推广人发积分）
+    promoter_id = Column(Integer, index=True, nullable=True)
     status = Column(Integer, default=1)
     reject_reason = Column(String(255), default="")
     settled_points = Column(Integer, default=0)
@@ -107,6 +125,11 @@ class JobApplication(Base):
     finish_time = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # 🚨 防重复投递：原实现仅靠应用层查重，并发下会产生重复记录
+    __table_args__ = (
+        UniqueConstraint('job_id', 'worker_id', name='uq_job_worker'),
+    )
 
 
 class ApplicationLog(Base):
@@ -192,11 +215,115 @@ class PointTransaction(Base):
 
 
 class ServiceOrder(Base):
+    """同城服务订单（P5/P6 服务商业务域）
+
+    原表只有 id/city_id/provider_id/status，这里扩展为完整订单：
+    customer_id = 下单用户（C 端），provider_id = 接单服务商（users.id）
+    """
     __tablename__ = "service_orders"
     id = Column(Integer, primary_key=True)
     city_id = Column(String(10), index=True, nullable=True)
-    provider_id = Column(Integer, ForeignKey("users.id"))
-    status = Column(String(20), default="pending")
+    customer_id = Column(Integer, ForeignKey("users.id"), index=True, nullable=True)
+    provider_id = Column(Integer, ForeignKey("users.id"), index=True)
+    category_id = Column(Integer, index=True, nullable=True)
+    title = Column(String(100), default="")
+    description = Column(Text, default="")
+    price = Column(Float, default=0.0)
+    address = Column(String(255), default="")
+    contact_phone = Column(String(20), default="")
+    scheduled_at = Column(String(50), default="")
+    status = Column(String(20), default="pending", index=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class ServiceCategory(Base):
+    """同城服务类目（家政保洁、维修安装…）"""
+    __tablename__ = "service_categories"
+    id = Column(Integer, primary_key=True, index=True)
+    city_id = Column(String(10), index=True, nullable=True)
+    name = Column(String(50), nullable=False)
+    icon = Column(String(20), default="")
+    sort_no = Column(Integer, default=0)
+    status = Column(String(20), default="active", index=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+
+class ProviderProfile(Base):
+    """服务商/师傅档案（服务商端专属）"""
+    __tablename__ = "provider_profiles"
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), unique=True, index=True, nullable=False)
+    city_id = Column(String(10), index=True, nullable=True)
+    display_name = Column(String(50), default="")
+    category_id = Column(Integer, index=True, nullable=True)
+    avatar = Column(String(255), default="")
+    intro = Column(Text, default="")
+    district = Column(String(50), default="", index=True)
+    rating = Column(Float, default=5.0)
+    orders_done = Column(Integer, default=0)
+    verify_status = Column(String(20), default="unverified")
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+
+class ProviderCertificate(Base):
+    """服务商技能证书（走图床上传，平台审核）"""
+    __tablename__ = "provider_certificates"
+    id = Column(Integer, primary_key=True, index=True)
+    provider_id = Column(Integer, ForeignKey("users.id"), index=True, nullable=False)
+    city_id = Column(String(10), index=True, nullable=True)
+    title = Column(String(100), nullable=False)
+    image_url = Column(String(255), nullable=False)
+    status = Column(String(20), default="pending", index=True)  # pending / verified / rejected
+    reviewer_id = Column(Integer, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+
+class JobPromotion(Base):
+    """岗位推广记录：服务商/经纪人把岗位分享出去帮平台招工
+
+    同一推广人对同一岗位只记一次（唯一键），用于后续结算推广激励。
+    """
+    __tablename__ = "job_promotions"
+    id = Column(Integer, primary_key=True, index=True)
+    job_id = Column(Integer, ForeignKey("jobs.id"), index=True, nullable=False)
+    promoter_id = Column(Integer, ForeignKey("users.id"), index=True, nullable=False)
+    city_id = Column(String(10), index=True, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    __table_args__ = (
+        UniqueConstraint('job_id', 'promoter_id', name='uq_job_promoter'),
+    )
+
+
+class ProviderService(Base):
+    __tablename__ = "provider_services"
+    id = Column(Integer, primary_key=True, index=True)
+    provider_id = Column(Integer, ForeignKey("users.id"), index=True, nullable=False)
+    city_id = Column(String(10), index=True, nullable=True)
+    category_id = Column(Integer, index=True, nullable=True)
+    title = Column(String(100), nullable=False)
+    price = Column(Float, default=0.0)
+    price_unit = Column(String(20), default="次")
+    description = Column(Text, default="")
+    images = Column(JSONB, default=[])
+    # 一键直发采集的结构化信息：sub_items / experience / has_store / advantages / card_style
+    meta = Column(JSONB, default={})
+    status = Column(String(20), default="active", index=True)  # active / off
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class ServiceReview(Base):
+    __tablename__ = "service_reviews"
+    id = Column(Integer, primary_key=True, index=True)
+    city_id = Column(String(10), index=True, nullable=True)
+    order_id = Column(Integer, ForeignKey("service_orders.id"), index=True, nullable=True)
+    provider_id = Column(Integer, ForeignKey("users.id"), index=True, nullable=False)
+    customer_id = Column(Integer, ForeignKey("users.id"), index=True, nullable=True)
+    customer_name = Column(String(50), default="匿名用户")
+    rating = Column(Integer, default=5)
+    content = Column(Text, default="")
+    images = Column(JSONB, default=[])
     created_at = Column(DateTime, default=datetime.utcnow)
 
 
@@ -294,3 +421,29 @@ class HighRiskApproval(Base):
     __table_args__ = (
         CheckConstraint('operator_id != reviewer_id OR reviewer_id IS NULL', name='check_operator_not_reviewer'),
     )
+
+
+class Verification(Base):
+    """实名/人脸核验记录
+
+    一次认证尝试一条记录：
+      · 提交身份信息（姓名+身份证+证件照）→ status=pending, provider=info
+      · 人脸活体核验 → status=verified / rejected / manual_review, provider=mock|tencent|alipay
+    人工兜底审核后由管理员改写 status 并记录 reviewer_id / reviewed_at。
+    """
+    __tablename__ = "verifications"
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), index=True, nullable=False)
+    city_id = Column(String(10), index=True, nullable=True)
+    scene = Column(String(20), default="register", index=True)   # register / first_order / high_risk
+    provider = Column(String(20), default="info")                 # info / mock / tencent / alipay
+    biz_no = Column(String(64), unique=True, index=True)
+    status = Column(String(20), default="pending", index=True)    # pending/verified/rejected/manual_review
+    liveness_score = Column(Float, nullable=True)
+    similarity_score = Column(Float, nullable=True)
+    raw_result = Column(JSONB, default={})
+    reject_reason = Column(String(255), default="")
+    reviewer_id = Column(Integer, nullable=True)
+    reviewed_at = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)

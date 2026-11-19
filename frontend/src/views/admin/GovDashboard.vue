@@ -45,7 +45,30 @@
           </div>
           <div class="grid-item">
             <div class="icon-wrap blue-icon"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg></div>
-            <span class="name">空壳预警</span><span class="val text-red">{{ govData.shell_companies }} 家</span>
+            <span class="name">待审企业备案</span><span class="val text-red">{{ govData.pending_companies }} 家</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 待办审核（真实数据） -->
+      <div class="block-section">
+        <div class="block-title"><span class="line blue"></span> 待办审核</div>
+        <div class="block-cards">
+          <div class="grid-item" @click="$router.push('/admin/audit')">
+            <div class="icon-wrap blue-icon">🏢</div>
+            <span class="name">企业备案</span><span class="val text-blue">{{ govData.pending_companies }} 家</span>
+          </div>
+          <div class="grid-item" @click="$router.push('/admin/audit')">
+            <div class="icon-wrap blue-icon">🧑</div>
+            <span class="name">实名复核</span><span class="val text-blue">{{ govData.pending_verifications }} 人</span>
+          </div>
+          <div class="grid-item" @click="$router.push('/admin/audit')">
+            <div class="icon-wrap blue-icon">📜</div>
+            <span class="name">技能证书</span><span class="val text-blue">{{ govData.pending_certificates }} 份</span>
+          </div>
+          <div class="grid-item" @click="$router.push('/admin/risk')">
+            <div class="icon-wrap red-icon">⚠️</div>
+            <span class="name">风控岗位</span><span class="val text-red">{{ govData.risk_jobs }} 个</span>
           </div>
         </div>
       </div>
@@ -76,7 +99,15 @@
 import { ref, onMounted } from 'vue'
 import api from '../../api'
 
-const govData = ref({ disputes: 0, blacklist: 0, shell_companies: 0 })
+const govData = ref({
+  disputes: 0,
+  blacklist: 0,
+  shell_companies: 0,
+  pending_companies: 0,
+  pending_verifications: 0,
+  pending_certificates: 0,
+  risk_jobs: 0
+})
 
 onMounted(async () => {
   try {

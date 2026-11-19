@@ -44,8 +44,24 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
 
 async def init_models():
     import models
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
+
+    # 建表策略：Alembic 接管 schema 后，生产环境不应再自动建表。
+    # DB_AUTO_CREATE=true  → 启动时 create_all（本地开发方便）
+    # DB_AUTO_CREATE=false → 完全交给 `alembic upgrade head`
+    # 未配置时：非生产环境开、生产环境关。
+    auto_create = os.environ.get("DB_AUTO_CREATE", "").strip().lower()
+    if auto_create in ("0", "false", "no", "off"):
+        do_create = False
+    elif auto_create in ("1", "true", "yes", "on"):
+        do_create = True
+    else:
+        do_create = os.environ.get("ENV", "dev").lower() != "prod"
+
+    if do_create:
+        async with engine.begin() as conn:
+            await conn.run_sync(Base.metadata.create_all)
+    else:
+        print("ℹ️ DB_AUTO_CREATE 已关闭，表结构由 Alembic 管理（部署前请执行 alembic upgrade head）")
 
     async with AsyncSessionLocal() as session:
         result = await session.execute(select(models.City))

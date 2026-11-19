@@ -14,6 +14,15 @@
     </div>
 
     <div class="list-content">
+      <!-- 推广余额 -->
+      <div class="balance-bar">
+        <span class="bb-label">推广余额</span>
+        <span class="bb-val">{{ balance }}</span>
+        <span class="bb-unit">分</span>
+        <span class="bb-cost">加热 {{ boostPerDay }} 分/天</span>
+        <span class="bb-hint" @click="rechargeTip">充值 ›</span>
+      </div>
+
       <!-- 提示条 -->
       <div v-if="currentTab === 'draft' && !isVerified" class="pending-tip">
         完成企业备案后，草稿箱中的岗位将自动解锁。
@@ -28,6 +37,7 @@
         <div class="card-header">
           <h3>
             {{ item.title }}
+            <span v-if="isPinned(item)" class="status-tag-pin">置顶中</span>
             <span v-if="item.publish_status === 'draft'" class="status-tag-pending">草稿</span>
           </h3>
           <span class="salary">{{ item.salary }}</span>
@@ -55,6 +65,8 @@
           <button class="btn-share" v-if="currentTab === 'active'" @click="shareJob(item)">📤 生成海报</button>
 
           <div class="right-actions">
+            <!-- 加热置顶（消耗推广余额） -->
+            <button class="btn-gray text-orange" v-if="currentTab === 'active'" @click.stop="boost(item)">加热置顶</button>
             <!-- 草稿箱内，企业已认证，显示上架按钮 -->
             <button class="btn-gray text-green" v-if="item.publish_status === 'draft' && isVerified" @click.stop="publishJob(item)">立即上架</button>
 
@@ -62,8 +74,8 @@
             <button class="btn-gray" v-else-if="item.publish_status === 'active'" @click="$router.push('/merchant/job-create')">编辑</button>
 
             <button class="btn-gray text-red" v-if="item.publish_status === 'draft'" @click.stop="confirmDelete(item)">删除</button>
-            <button class="btn-gray text-blue" v-else-if="item.publish_status === 'active'">下架停招</button>
-            <button class="btn-gray text-blue" v-else-if="currentTab === 'stopped'">重新上架</button>
+            <button class="btn-gray text-blue" v-else-if="item.publish_status === 'active'" @click.stop="offlineJob(item)">下架停招</button>
+            <button class="btn-gray text-blue" v-else-if="currentTab === 'stopped'" @click.stop="publishJob(item)">重新上架</button>
           </div>
         </div>
       </div>
@@ -85,6 +97,38 @@ import api from '../../api'
 const currentTab = ref('active')
 const rawJobs = ref([])
 const isVerified = ref(false)
+const balance = ref(0)
+const boostPerDay = ref(30)
+
+const loadBalance = async () => {
+  try {
+    const res = await api.get('/merchant/balance')
+    balance.value = Number(res.data?.promotion_balance) || 0
+    boostPerDay.value = Number(res.data?.boost_points_per_day) || 30
+  } catch (err) {}
+}
+
+const isPinned = (item) => {
+  return !!item.pinned_until && new Date(item.pinned_until).getTime() > Date.now()
+}
+
+const boost = async (item) => {
+  const days = 7
+  const cost = boostPerDay.value * days
+  if (!window.confirm(`花费 ${cost} 推广积分，加热置顶 ${days} 天？\n当前余额：${balance.value} 分`)) return
+  try {
+    const res = await api.post(`/jobs/${item.id}/boost`, null, { params: { days } })
+    window.$toast(res.message || '已加热置顶')
+    if (res.data && res.data.promotion_balance !== undefined) {
+      balance.value = Number(res.data.promotion_balance) || 0
+    }
+    loadJobs()
+  } catch (err) {
+    window.$toast(err.response?.data?.detail || '加热失败')
+  }
+}
+
+const rechargeTip = () => window.$toast('推广余额由运营线下充值，请联系平台客服')
 
 const loadJobs = async () => {
   try {
@@ -117,15 +161,47 @@ const publishJob = async (item) => {
   }
 }
 
-const refreshJob = (item) => window.$toast('刷新成功，排序已提升')
-const shareJob = (item) => window.$toast('正在生成招聘海报...')
-const confirmDelete = (item) => {
-  if (window.confirm(`确认删除草稿【${item.title}】吗？`)) {
-    window.$toast('Demo阶段暂未开放真实删除接口')
+const offlineJob = async (item) => {
+  if (!window.confirm(`确认下架【${item.title}】吗？下架后 C 端不再展示，可随时重新上架。`)) return
+  try {
+    const res = await api.put(`/jobs/${item.id}/offline`)
+    window.$toast(res.message || '已下架停招')
+    loadJobs()
+  } catch (err) {
+    window.$toast(err.response?.data?.detail || '下架失败')
   }
 }
 
-onMounted(() => { loadJobs() })
+const refreshJob = async (item) => {
+  try {
+    await api.put(`/jobs/${item.id}/refresh`)
+    window.$toast('刷新成功')
+    loadJobs()
+  } catch (err) {
+    window.$toast(err.response?.data?.detail || '刷新失败')
+  }
+}
+
+const shareJob = (item) => {
+  const link = `${window.location.origin}${window.location.pathname}#/worker/job-detail/${item.id}`
+  navigator.clipboard?.writeText(link).then(
+    () => window.$toast('岗位链接已复制，可发给工友'),
+    () => window.$toast('复制失败，请手动分享')
+  )
+}
+
+const confirmDelete = async (item) => {
+  if (!window.confirm(`确认删除草稿【${item.title}】吗？删除后不可恢复。`)) return
+  try {
+    const res = await api.delete(`/jobs/${item.id}`)
+    window.$toast(res.message || '岗位已删除')
+    loadJobs()
+  } catch (err) {
+    window.$toast(err.response?.data?.detail || '删除失败')
+  }
+}
+
+onMounted(() => { loadJobs(); loadBalance() })
 </script>
 
 <style scoped>
@@ -139,6 +215,26 @@ onMounted(() => { loadJobs() })
 .tab.active { color: #2563eb; font-weight: bold; border-bottom: 2px solid #2563eb; }
 
 .list-content { padding: 16px; }
+
+/* 推广余额条 */
+.balance-bar {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  background: linear-gradient(135deg, #fff7ed, #ffedd5);
+  border: 1px solid #fed7aa;
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin-bottom: 12px;
+}
+.bb-label { font-size: 13px; color: #9a3412; }
+.bb-val { font-size: 20px; font-weight: 800; color: #ea580c; }
+.bb-unit { font-size: 12px; color: #9a3412; }
+.bb-cost { margin-left: auto; font-size: 12px; color: #b45309; }
+.bb-hint { font-size: 13px; font-weight: 700; color: #ea580c; }
+
+.status-tag-pin { font-size: 12px; background: #fff1e6; color: #ff6b00; padding: 2px 6px; border-radius: 4px; font-weight: 700; }
+.btn-gray.text-orange { color: #ff6b00; border-color: #ffd3b0; }
 .pending-tip { background: #fffbeb; color: #b45309; font-size: 13px; padding: 10px; border-radius: 6px; margin-bottom: 12px; border: 1px solid #fde68a; }
 .success-tip { background: #ecfdf5; color: #10b981; font-size: 13px; padding: 10px; border-radius: 6px; margin-bottom: 12px; border: 1px solid #a7f3d0; }
 

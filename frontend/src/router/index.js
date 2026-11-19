@@ -17,7 +17,11 @@ const router = createRouter({
         { path: 'short-term', component: () => import('../views/worker/WorkerShortTerm.vue') },
         { path: 'find', component: () => import('../views/worker/WorkerFind.vue') },
         { path: 'job-detail/:id', component: () => import('../views/worker/JobDetail.vue') },
+        { path: 'service', component: () => import('../views/worker/WorkerService.vue') },
+        { path: 'service-detail/:id', component: () => import('../views/worker/ServiceDetail.vue') },
+        { path: 'service-reviews/:id', component: () => import('../views/worker/ServiceReviews.vue') },
         { path: 'my-applies', component: () => import('../views/worker/WorkerMyApplies.vue'), meta: { requireAuth: true } },
+        { path: 'favorites', component: () => import('../views/worker/WorkerFavorites.vue') },
         { path: 'task', component: () => import('../views/worker/WorkerTask.vue'), meta: { requireAuth: true } },
         { path: 'exchange', component: () => import('../views/worker/WorkerExchange.vue'), meta: { requireAuth: true } },
         { path: 'mine', component: () => import('../views/worker/WorkerMine.vue'), meta: { requireAuth: true } },
@@ -49,9 +53,25 @@ const router = createRouter({
     { path: '/merchant/verify', component: () => import('../views/merchant/MerchantVerify.vue'), meta: { role: 'merchant', requireAuth: true } },
 
     {
+      path: '/provider',
+      component: () => import('../layout/ProviderLayout.vue'),
+      meta: { role: 'provider', requireAuth: true },
+      children: [
+        { path: 'hall', component: () => import('../views/provider/ProviderHall.vue') },
+        { path: 'services', component: () => import('../views/provider/ProviderServices.vue') },
+        { path: 'publish', component: () => import('../views/provider/ProviderPublish.vue') },
+        { path: 'verify', component: () => import('../views/provider/ProviderVerify.vue') },
+        { path: 'homepage', component: () => import('../views/provider/ProviderHomepage.vue') },
+        { path: 'settings', component: () => import('../views/provider/ProviderSettings.vue') },
+        { path: 'mine', component: () => import('../views/provider/ProviderMine.vue') }
+      ]
+    },
+
+    {
       path: '/admin',
       component: () => import('../layout/AdminLayout.vue'),
-      meta: { requireAuth: true },
+      // 🚨 管理端角色守卫：activeRole 为界面标识（agent/ops/gov），后端真实角色在 JWT 里
+      meta: { requireAuth: true, roles: ['agent', 'ops', 'gov', 'hq_ops', 'hq_admin', 'city_ops', 'city_gov', 'city_admin'] },
       children: [
         { path: 'dash', component: () => import('../views/admin/AdminDash.vue') },
         { path: 'audit', component: () => import('../views/admin/AuditCenter.vue') },
@@ -78,7 +98,12 @@ router.beforeEach((to, from, next) => {
 
   if (token) {
     const requiredRole = to.matched.find(record => record.meta.role)?.meta.role
-    if (requiredRole && requiredRole !== activeRole) {
+    const requiredRoles = to.matched.find(record => record.meta.roles)?.meta.roles
+
+    const singleMismatch = requiredRole && requiredRole !== activeRole
+    const multiMismatch = requiredRoles && !requiredRoles.includes(activeRole)
+
+    if (singleMismatch || multiMismatch) {
       if (window.$toast) window.$toast('身份不匹配，正在返回登录页...')
       localStorage.clear()
       setTimeout(() => { window.location.hash = '#/login' }, 1000)

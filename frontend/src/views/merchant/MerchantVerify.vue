@@ -136,8 +136,10 @@ const handleFileChange = async (event, type) => {
 
     const formData = new FormData()
     formData.append('file', uploadFile)
-    const res = await api.post('/upload', formData, { headers: { 'Content-Type': 'multipart/form-data' } })
-    form[type] = res.url
+    // 🚨 修复：原路径 /upload 在路由表里不存在（实际为 /api/upload/normal），
+    // 且响应结构是 { code, data: { url } }，取 res.url 恒为 undefined。
+    const res = await api.post('/upload/normal', formData, { headers: { 'Content-Type': 'multipart/form-data' } })
+    form[type] = res.data.url
     window.$toast('上传成功')
   } catch (err) {
     window.$toast(err.response?.data?.detail || '上传失败')

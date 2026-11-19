@@ -7,24 +7,67 @@
     </div>
 
     <div class="tabs">
-      <div class="tab" :class="{ active: currentTab === 'company' }" @click="currentTab = 'company'">企业审核</div>
-      <div class="tab" :class="{ active: currentTab === 'agent' }" @click="currentTab = 'agent'">经纪人审核</div>
-      <div class="tab" :class="{ active: currentTab === 'provider' }" @click="currentTab = 'provider'">服务商审核</div>
+      <div class="tab" :class="{ active: currentTab === 'company' }" @click="switchTab('company')">企业审核</div>
+      <div class="tab" :class="{ active: currentTab === 'agent' }" @click="switchTab('agent')">经纪人审核</div>
+      <div class="tab" :class="{ active: currentTab === 'provider' }" @click="switchTab('provider')">服务商审核</div>
+      <div class="tab" :class="{ active: currentTab === 'cert' }" @click="switchTab('cert')">技能证书</div>
+      <div class="tab" :class="{ active: currentTab === 'verify' }" @click="switchTab('verify')">实名复核</div>
     </div>
 
     <div class="list-content">
-      <div class="card" v-for="item in filteredList" :key="item.id" @click="openDetail(item)">
-        <div class="header-row">
-          <h3>{{ item.name }}</h3>
-          <span class="status" :class="item.status === 'active' ? 'pass' : (item.status === 'rejected' ? 'danger' : 'pending')">
-            {{ item.status === 'active' ? '已通过' : (item.status === 'rejected' ? '已驳回' : '待审核') }}
-          </span>
+      <!-- 企业 / 经纪人 / 服务商备案 -->
+      <template v-if="isEntityTab">
+        <div class="card" v-for="item in filteredList" :key="item.id" @click="openDetail(item)">
+          <div class="header-row">
+            <h3>{{ item.name }}</h3>
+            <span class="status" :class="item.status === 'active' ? 'pass' : (item.status === 'rejected' ? 'danger' : 'pending')">
+              {{ item.status === 'active' ? '已通过' : (item.status === 'rejected' ? '已驳回' : '待审核') }}
+            </span>
+          </div>
+          <div class="info-row"><span>档案号:</span> {{ item.file_no }}</div>
+          <div class="info-row"><span>信用代码:</span> {{ item.ext_info?.credit_code || '未填写' }}</div>
+          <div class="arrow-hint">点击调阅详细档案比对 ></div>
         </div>
-        <div class="info-row"><span>档案号:</span> {{ item.file_no }}</div>
-        <div class="info-row"><span>信用代码:</span> {{ item.ext_info?.credit_code || '未填写' }}</div>
-        <div class="arrow-hint">点击调阅详细档案比对 ></div>
-      </div>
-      <div v-if="filteredList.length === 0" class="empty">当前分类暂无数据</div>
+        <div v-if="filteredList.length === 0" class="empty">当前分类暂无数据</div>
+      </template>
+
+      <!-- 技能证书 -->
+      <template v-else-if="currentTab === 'cert'">
+        <div class="card" v-for="c in certList" :key="c.id">
+          <div class="header-row">
+            <h3>{{ c.title }}</h3>
+            <span class="status pending">待审核</span>
+          </div>
+          <div class="info-row"><span>服务商:</span> {{ c.provider_name }}（{{ c.phone }}）</div>
+          <div class="info-row"><span>提交时间:</span> {{ c.created_at }}</div>
+          <img v-if="c.image_url" :src="c.image_url" class="cert-img" alt="证书" />
+          <div class="op-row">
+            <button class="btn-reject" @click="reviewCert(c, false)">驳回</button>
+            <button class="btn-pass" @click="reviewCert(c, true)">通过</button>
+          </div>
+        </div>
+        <div v-if="!certList.length" class="empty">暂无待审核证书</div>
+      </template>
+
+      <!-- 实名复核 -->
+      <template v-else>
+        <div class="card" v-for="v in verifyList" :key="v.id">
+          <div class="header-row">
+            <h3>{{ v.real_name || v.phone }}</h3>
+            <span class="status pending">人工复核</span>
+          </div>
+          <div class="info-row"><span>手机号:</span> {{ v.phone }}</div>
+          <div class="info-row">
+            <span>活体分:</span> {{ v.liveness_score ?? '-' }} · <span>相似度:</span> {{ v.similarity_score ?? '-' }}
+          </div>
+          <div class="info-row"><span>送审原因:</span> {{ v.reject_reason || '—' }}</div>
+          <div class="op-row">
+            <button class="btn-reject" @click="reviewVerify(v, false)">驳回</button>
+            <button class="btn-pass" @click="reviewVerify(v, true)">通过</button>
+          </div>
+        </div>
+        <div v-if="!verifyList.length" class="empty">暂无待复核实名</div>
+      </template>
     </div>
 
     <!-- 详情弹窗 -->
@@ -64,14 +107,75 @@ import api from '../../api'
 
 const currentTab = ref('company')
 const allList = ref([])
+const certList = ref([])
+const verifyList = ref([])
 const showModal = ref(false)
 const currentItem = ref({})
+
+const ENTITY_TABS = ['company', 'agent', 'provider']
+const isEntityTab = computed(() => ENTITY_TABS.includes(currentTab.value))
 
 const loadCompanies = async () => {
   try {
     const res = await api.get('/admin/companies')
     allList.value = res.data
   } catch (err) { window.$toast('获取审核列表失败') }
+}
+
+const loadCerts = async () => {
+  try {
+    const res = await api.get('/admin/certificates', { params: { status: 'pending' } })
+    certList.value = res.data || []
+  } catch (err) {
+    certList.value = []
+    window.$toast('获取证书列表失败')
+  }
+}
+
+const loadVerifications = async () => {
+  try {
+    const res = await api.get('/admin/verifications', { params: { status: 'manual_review' } })
+    verifyList.value = res.data || []
+  } catch (err) {
+    verifyList.value = []
+    window.$toast('获取实名复核列表失败')
+  }
+}
+
+function switchTab(tab) {
+  currentTab.value = tab
+  if (tab === 'cert') loadCerts()
+  else if (tab === 'verify') loadVerifications()
+}
+
+async function reviewCert(cert, pass) {
+  let reason = ''
+  if (!pass) {
+    reason = window.prompt('请填写驳回原因：', '证书不清晰，请重新上传')
+    if (reason === null) return
+  }
+  try {
+    await api.post(`/admin/certificates/${cert.id}/review`, { pass_verify: pass, reason })
+    window.$toast(pass ? '证书已通过' : '证书已驳回')
+    loadCerts()
+  } catch (err) {
+    window.$toast(err.response?.data?.detail || '操作失败')
+  }
+}
+
+async function reviewVerify(item, pass) {
+  let reason = ''
+  if (!pass) {
+    reason = window.prompt('请填写驳回原因：', '人脸核验未通过，请重新认证')
+    if (reason === null) return
+  }
+  try {
+    await api.post(`/admin/verifications/${item.id}/review`, { pass_verify: pass, reason })
+    window.$toast(pass ? '实名已通过' : '已驳回')
+    loadVerifications()
+  } catch (err) {
+    window.$toast(err.response?.data?.detail || '操作失败')
+  }
 }
 
 const filteredList = computed(() => {
@@ -115,6 +219,9 @@ onMounted(() => { loadCompanies() })
 </script>
 
 <style scoped>
+.op-row { display: flex; gap: 10px; margin-top: 12px; }
+.op-row .btn-reject, .op-row .btn-pass { flex: 1; }
+.cert-img { width: 100%; max-height: 220px; object-fit: contain; margin-top: 12px; border-radius: 8px; background: #f5f7fa; }
 .audit-page { min-height: 100vh; background: #f0f4f8; padding-bottom: 80px; }
 .header { background: #0052d9; padding: 30px 20px 20px; color: #ffffff; }
 .header h2 { font-size: 20px; margin-bottom: 4px; }

@@ -9,7 +9,16 @@ from sqlalchemy import select
 from database import get_db, redis_client
 from models import User
 
-SECRET_KEY = os.environ.get("SECRET_KEY", "linggong_secret")
+_ENV = os.environ.get("ENV", "dev").lower().strip()
+SECRET_KEY = os.environ.get("SECRET_KEY", "").strip()
+
+# 🚨 修复：原实现回退到硬编码 "linggong_secret"，未配置时可被离线伪造 JWT。
+# 生产环境必须显式配置，缺失直接拒绝启动（fail-closed）；非生产用固定值便于本地调试。
+if not SECRET_KEY:
+    if _ENV == "prod":
+        raise RuntimeError("🚨 致命错误：生产环境必须配置 SECRET_KEY，拒绝启动")
+    SECRET_KEY = "linggong_secret_dev_only"
+
 ALGORITHM = "HS256"
 
 # 🚨 核心配置：auto_error=False 允许没带 Token 时返回 None（供游客接口使用）
@@ -79,15 +88,42 @@ async def get_current_user_id(current_user: User = Depends(get_current_user)) ->
     return current_user.id
 
 
-def require_roles(allowed_roles: list[str]):
-    """角色权限校验工厂"""
+def require_roles(allowed_roles: list[str], deny_message: str | None = None):
+    """角色权限校验工厂
+
+    deny_message：用于意图驱动登录的友好提示。
+    例如求职者误点「发布岗位」时，后端应回「请完成商家认证」而不是笼统的权限不足。
+    """
 
     async def role_checker(current_user: User = Depends(get_current_user)):
         if current_user.role not in allowed_roles:
-            raise HTTPException(status_code=403, detail="权限不足，无权访问此接口")
+            detail = deny_message or "权限不足，无权访问此接口"
+            raise HTTPException(status_code=403, detail=detail)
         return current_user
 
     return role_checker
+
+
+# 管理端角色：hq_* 为总台（全局可见），city_* 为属地（按城市隔离）
+ADMIN_ROLES = ["hq_ops", "hq_admin", "city_ops", "city_gov", "city_admin"]
+
+# 管理端统一鉴权依赖（/api/admin、/api/audit 使用）
+admin_required = require_roles(ADMIN_ROLES)
+
+# 可自助注册的角色白名单：管理端角色必须由平台开通，禁止自助注册
+SELF_REGISTER_ROLES = ["worker", "merchant", "provider"]
+
+
+def is_hq_role(current_user: User | None) -> bool:
+    """是否总台角色（可跨城查看）"""
+    return bool(current_user and current_user.role.startswith("hq_"))
+
+
+def scope_city_query(query, current_user: User, model):
+    """管理端通用城市范围过滤：总台看全量，属地只看本城"""
+    if is_hq_role(current_user):
+        return query
+    return query.where(model.city_id == current_user.city_id)
 
 
 def apply_city_filter(query, current_user: User | None, model: any):
@@ -108,6 +144,24 @@ def verify_resource_city(resource_city_id: str, current_user: User | None):
         return True
     if resource_city_id != current_user.city_id:
         raise HTTPException(status_code=403, detail="越权拦截：无权操作其他城市的数据")
+    return True
+
+
+async def check_rate_limit(key: str, limit: int, window_seconds: int):
+    """通用 Redis 频控：超阈值抛 429。Redis 不可用时静默放行（与广告接口降级策略一致）"""
+    if redis_client is None:
+        return True
+    try:
+        current = await redis_client.incr(key)
+        if current == 1:
+            await redis_client.expire(key, window_seconds)
+        if current > limit:
+            raise HTTPException(status_code=429, detail="操作过于频繁，请稍后再试")
+    except HTTPException:
+        raise
+    except Exception:
+        # Redis 抖动不应阻断主流程
+        return True
     return True
 
 

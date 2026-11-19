@@ -136,8 +136,8 @@ const getLineData = (lineIndex) => {
 .tl-node .status-text { font-size: 10px; white-space: nowrap; margin-bottom: 2px; font-weight: bold; }
 .tl-node .date { font-size: 10px; color: #9ca3af; white-space: nowrap; }
 
-.tl-node.success .dot { background: #2563eb; box-shadow: 0 0 0 1px #2563eb; }
-.tl-node.success .text { color: #2563eb; }
+.tl-node.success .dot { background: var(--brand, #2563eb); box-shadow: 0 0 0 1px var(--brand, #2563eb); }
+.tl-node.success .text { color: var(--brand, #2563eb); }
 .tl-node.processing .dot { background: #10b981; box-shadow: 0 0 0 1px #10b981; }
 .tl-node.processing .text { color: #10b981; font-weight: bold; }
 .tl-node.processing .status-text { color: #10b981; }
@@ -148,7 +148,7 @@ const getLineData = (lineIndex) => {
 .tl-node.wait .text { color: #9ca3af; }
 
 .tl-line { flex: 1; height: 2px; position: relative; top: 6px; z-index: 1; transition: all 0.3s; background: #e5e7eb; }
-.tl-line.success { background: #2563eb; }
+.tl-line.success { background: var(--brand, #2563eb); }
 .tl-line.processing { background: #10b981; }
 .tl-line.danger { background: #ef4444; }
 .tl-line.wait { background: #e5e7eb; }

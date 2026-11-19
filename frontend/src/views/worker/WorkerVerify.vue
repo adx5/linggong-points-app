@@ -125,9 +125,27 @@ const submitVerify = async () => {
 
   uploading.value = true
   try {
+    // 第 1 步：提交身份信息（后端只置为 pending）
     await api.post('/user/verify', form)
-    window.$toast('实名认证成功')
-    setTimeout(() => { router.back() }, 1000)
+
+    // 第 2 步：人脸活体核验
+    // TODO: 目前使用占位图标识走 Mock Provider，接入腾讯云/支付宝后
+    //       这里改为摄像头采集的活体检测结果（video/face token）
+    const live = await api.post('/user/verify/liveness', {
+      face_image: 'mock_face_capture',
+      scene: 'register'
+    })
+
+    const status = live.data?.status
+    if (status === 'verified') {
+      window.$toast('实名认证完成')
+      setTimeout(() => { router.back() }, 1200)
+    } else if (status === 'manual_review') {
+      window.$toast('已转人工复核，请耐心等待审核结果')
+      setTimeout(() => { router.back() }, 1800)
+    } else {
+      window.$toast(live.data?.reason || '人脸核验未通过，请重试')
+    }
   } catch (err) {
     window.$toast(err.response?.data?.detail || '认证失败')
   } finally {

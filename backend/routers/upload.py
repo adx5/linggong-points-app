@@ -6,7 +6,7 @@ import httpx
 from PIL import Image
 import filetype
 from fastapi import APIRouter, UploadFile, File, Depends, HTTPException
-from core.security import get_current_user_id
+from core.security import get_current_user_id, check_rate_limit
 
 router = APIRouter(prefix="/api/upload", tags=["upload"])
 
@@ -137,11 +137,14 @@ async def process_and_upload(file: UploadFile, is_verify: bool = False) -> str:
 
 @router.post("/normal")
 async def upload_normal_image(file: UploadFile = File(...), user_id: int = Depends(get_current_user_id)):
+    # 🚨 修复：原实现无任何频率限制，可无限刷图床
+    await check_rate_limit(f"rate:upload:normal:{user_id}", 30, 60)
     url = await process_and_upload(file, is_verify=False)
     return {"code": 0, "data": {"url": url}, "message": "上传成功"}
 
 
 @router.post("/verify")
 async def upload_verify_doc(file: UploadFile = File(...), user_id: int = Depends(get_current_user_id)):
+    await check_rate_limit(f"rate:upload:verify:{user_id}", 10, 60)
     url = await process_and_upload(file, is_verify=True)
     return {"code": 0, "data": {"url": url}, "message": "证件上传成功"}
